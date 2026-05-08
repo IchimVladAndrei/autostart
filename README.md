@@ -1,3 +1,4 @@
+
 # AutoStart - Sistem Integrat de Gestiune Parc Auto
 
 
@@ -11,6 +12,7 @@ AutoStart este o platformă destinată digitalizării operațiunilor dintr-un de
 - Căutare și filtrare avansată pentru catalogul auto
 - Monitorizarea performanței sistemului prin metrici centralizate
 
+<img width="989" height="819" alt="c787f7f4-bd83-40bd-80f8-f5c68544c44d" src="https://github.com/user-attachments/assets/eb9c7e3c-ee69-4804-8b68-8dbae9d6f8bf" />
 
 
 ## Tech Stack
