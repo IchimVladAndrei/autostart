@@ -22,7 +22,7 @@ public class ExtraOption {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
+    @NotBlank(message = "Option name is required")
     @Column(nullable = false, unique = true)
     private String name;
 

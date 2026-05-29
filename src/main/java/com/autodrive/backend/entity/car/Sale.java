@@ -32,7 +32,7 @@ public class Sale {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @DecimalMin(value = "0.0", inclusive = false)
+    @DecimalMin(value = "0.0", inclusive = false, message = "Final price must be greater than zero")
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal finalPrice;
 

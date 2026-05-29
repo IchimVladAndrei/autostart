@@ -20,15 +20,15 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
+    @NotBlank(message = "First name is required")
     @Column(nullable = false)
     private String firstName;
 
-    @NotBlank
+    @NotBlank(message = "Last name is required")
     @Column(nullable = false)
     private String lastName;
 
-    @Email
+    @Email(message = "Email format is wrong")
     @Column(unique = true)
     private String email;
 }

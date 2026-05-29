@@ -22,7 +22,7 @@ public class Brand {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
+    @NotBlank(message = "Brand name is required")
     @Column(nullable = false, unique = true)
     private String name;
 

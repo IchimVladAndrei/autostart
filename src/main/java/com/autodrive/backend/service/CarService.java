@@ -3,6 +3,7 @@ package com.autodrive.backend.service;
 import com.autodrive.backend.entity.car.Brand;
 import com.autodrive.backend.entity.car.Car;
 import com.autodrive.backend.entity.car.ExtraOption;
+import com.autodrive.backend.exception.CarNotFoundException;
 import com.autodrive.backend.repo.BrandRepository;
 import com.autodrive.backend.repo.CarRepository;
 import com.autodrive.backend.repo.ExtraOptionRepository;
@@ -31,7 +32,7 @@ public class CarService {
     @Transactional(readOnly = true)
     public Car findById(UUID id) {
         return carRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
+                .orElseThrow(() -> new CarNotFoundException("Car not found with id: " + id));
     }
 
     public Car create(Car car) {
@@ -53,7 +54,7 @@ public class CarService {
 
     public void delete(UUID id) {
         if (!carRepository.existsById(id)) {
-            throw new EntityNotFoundException("Car not found with id: " + id);
+            throw new CarNotFoundException("Car not found with id: " + id);
         }
         carRepository.deleteById(id);
     }
@@ -61,7 +62,7 @@ public class CarService {
     private void applyRelations(Car car) {
         if (car.getBrand() != null && car.getBrand().getId() != null) {
             Brand brand = brandRepository.findById(car.getBrand().getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Brand not found with id: " + car.getBrand().getId()));
+                    .orElseThrow(() -> new CarNotFoundException("Brand not found with id: " + car.getBrand().getId()));
             car.setBrand(brand);
         }
 
