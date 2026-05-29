@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -25,16 +26,17 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
-    @Size(min = 17, max = 17)
+    @NotBlank(message = "VIN code is required")
+    @Size(min = 17, max = 17,message = "VIN code must be exactly 17 characters")
     @Column(nullable = false, unique = true, length = 17)
     private String vin;
 
-    @NotBlank
+    @NotBlank(message = "Model is required")
     @Column(nullable = false)
     private String model;
 
-    @DecimalMin(value = "0.0", inclusive = false)
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 

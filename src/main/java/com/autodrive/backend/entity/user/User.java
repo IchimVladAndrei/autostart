@@ -21,19 +21,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank(message="temp")
-    @Email(message="temp")
+    @NotBlank(message="Email is required")
+    @Email(message="Email format is wrong")
     @Column(unique = true,nullable = false)
     private String email;
 
-    @NotBlank(message = "temp")
-    @Size(min = 6, message = "temp")
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters long")
     @Column(nullable = false)
     private String password;
-    @NotBlank(message = "temp")
+    @NotBlank(message = "First name is required")
     @Column(name = "first_name", nullable = false)
     private String firstName;
-    @NotBlank(message = "temp")
+    @NotBlank(message = "Last name is required")
     @Column(name="last_name",nullable=false)
     private String lastName;
     @Enumerated(EnumType.STRING)
