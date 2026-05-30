@@ -1,7 +1,7 @@
 package com.autodrive.backend.controller;
 
-import com.autodrive.backend.entity.car.Car;
-import com.autodrive.backend.service.CarService;
+import com.autodrive.backend.entity.car.Vehicle;
+import com.autodrive.backend.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,31 +16,31 @@ import java.util.UUID;
 @RequestMapping("/api/v1/cars")
 public class CarController {
 
-    private final CarService carService;
+    private final VehicleService vehicleService;
 
     @GetMapping
-    public List<Car> getAll() {
-        return carService.findAll();
+    public List<Vehicle> getAll() {
+        return vehicleService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Car getById(@PathVariable UUID id) {
-        return carService.findById(id);
+    public Vehicle getById(@PathVariable UUID id) {
+        return vehicleService.findById(id);
     }
 
     @PostMapping
-    public ResponseEntity<Car> create(@Valid @RequestBody Car car) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(carService.create(car));
+    public ResponseEntity<Vehicle> create(@Valid @RequestBody Vehicle vehicle) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.create(vehicle));
     }
 
     @PutMapping("/{id}")
-    public Car update(@PathVariable UUID id, @Valid @RequestBody Car car) {
-        return carService.update(id, car);
+    public Vehicle update(@PathVariable UUID id, @Valid @RequestBody Vehicle vehicle) {
+        return vehicleService.update(id, vehicle);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        carService.delete(id);
+        vehicleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

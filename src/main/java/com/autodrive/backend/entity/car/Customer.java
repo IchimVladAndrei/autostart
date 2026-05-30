@@ -1,5 +1,6 @@
 package com.autodrive.backend.entity.car;
 
+import com.autodrive.backend.entity.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -17,19 +18,21 @@ import java.util.UUID;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID userId;
 
-    @NotBlank
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @NotBlank(message = "Name is required")
     @Column(nullable = false)
-    private String firstName;
+    private String name;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String lastName;
+    @NotBlank(message = "CNP is required")
+    @Column(unique = true, nullable = false, length = 13)
+    private String cnp;
 
-    @Email
-    @Column(unique = true)
-    private String email;
+    private String phone;
+    private String status;
 }
-

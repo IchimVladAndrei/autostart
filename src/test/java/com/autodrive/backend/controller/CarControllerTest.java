@@ -1,7 +1,7 @@
 package com.autodrive.backend.controller;
 
-import com.autodrive.backend.entity.car.Car;
-import com.autodrive.backend.service.CarService;
+import com.autodrive.backend.entity.car.Vehicle;
+import com.autodrive.backend.service.VehicleService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,33 +24,34 @@ import static org.mockito.Mockito.when;
 class CarControllerTest {
 
     @Mock
-    private CarService carService;
+    private VehicleService vehicleService;
 
     @InjectMocks
     private CarController carController;
 
     @Test
     void shouldReturnCars() {
-        when(carService.findAll()).thenReturn(List.of());
+        when(vehicleService.findAll()).thenReturn(List.of());
 
         assertEquals(0, carController.getAll().size());
     }
 
     @Test
     void shouldCreateCar() {
-        Car car = Car.builder()
+        Vehicle vehicle = Vehicle
+                .builder()
                 .id(UUID.randomUUID())
                 .vin("WVWZZZ1JZXW000001")
                 .model("Golf")
                 .price(new BigDecimal("10000.00"))
                 .build();
 
-        when(carService.create(any(Car.class))).thenReturn(car);
+        when(vehicleService.create(any(Vehicle.class))).thenReturn(vehicle);
 
-        ResponseEntity<Car> response = carController.create(car);
+        ResponseEntity<Vehicle> response = carController.create(vehicle);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        verify(carService).create(any(Car.class));
+        verify(vehicleService).create(any(Vehicle.class));
     }
 }
