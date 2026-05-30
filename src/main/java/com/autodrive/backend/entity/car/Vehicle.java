@@ -6,8 +6,9 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -19,9 +20,10 @@ import java.util.List;
 public class Vehicle {
 
     @Id
+    @Setter(AccessLevel.NONE)
     @NotBlank(message = "VIN is required")
     @Size(min = 17, max = 17, message = "VIN must be exactly 17 characters")
-    @Column(unique = true, nullable = false, length = 17)
+    @Column(unique = true, nullable = false, updatable = false, length = 17)
     private String vin;
 
     @NotBlank(message = "Model is required")
@@ -37,8 +39,9 @@ public class Vehicle {
     @Min(value = 1900, message = "Year must be valid")
     private Integer year;
 
-    @NotBlank(message = "Status is required")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Status is required")
+    private VehicleStatus status;
 
     @NotBlank(message = "Color is required")
     private String color;
@@ -60,5 +63,18 @@ public class Vehicle {
             inverseJoinColumns = @JoinColumn(name = "option_id")
     )
     @JsonIgnoreProperties({"vehicles"})
-    private List<ExtraOption> extraOptions = new ArrayList<>();
+    private Set<ExtraOption> extraOptions = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vehicle vehicle = (Vehicle) o;
+        return vin != null && vin.equals(vehicle.vin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(vin);
+    }
 }

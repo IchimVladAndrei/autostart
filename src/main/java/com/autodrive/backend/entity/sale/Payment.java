@@ -1,9 +1,7 @@
 package com.autodrive.backend.entity.sale;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -25,20 +23,25 @@ public class Payment {
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be greater than zero")
+    @Digits(integer = 10, fraction = 2, message = "Amount must have up to 2 fractional digits")
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @NotBlank(message = "Payment type is required")
-    private String type;
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Payment type is required")
+    private PaymentType type;
 
-    @NotBlank(message = "Payment status is required")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Payment status is required")
+    private PaymentStatus status;
 
     @NotNull(message = "Payment date is required")
+    @PastOrPresent(message = "Payment date cannot be in the future")
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate; // automatic or manual insertion?
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "contract_id", nullable = false)
+    @NotNull(message = "Contract is required")
     private SaleContract contract;
 }

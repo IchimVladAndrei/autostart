@@ -1,6 +1,6 @@
 package com.autodrive.backend.entity.sale;
 
-import com.autodrive.backend.entity.car.Customer;
+import com.autodrive.backend.entity.user.Customer;
 import com.autodrive.backend.entity.car.Vehicle;
 import com.autodrive.backend.entity.user.Employee;
 import jakarta.persistence.*;
@@ -39,10 +39,9 @@ public class SaleContract {
     @Column(name = "notes", length = 1000)
     private String notes;
 
-    @NotBlank(message = "Status is required")
-    @Size(max = 30, message = "Status must not exceed 30 characters")
-    @Column(name = "status", nullable = false, length = 30)
-    private String status; //ENUM?
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Status is required")
+    private SaleContractStatus status;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
