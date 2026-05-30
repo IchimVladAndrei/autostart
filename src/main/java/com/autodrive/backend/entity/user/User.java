@@ -5,7 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -14,32 +16,34 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name="users")
+@Table(name = "users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank(message="temp")
-    @Email(message="temp")
-    @Column(unique = true,nullable = false)
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @NotBlank(message = "temp")
-    @Size(min = 6, message = "temp")
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must have at least 6 characters")
     @Column(nullable = false)
     private String password;
-    @NotBlank(message = "temp")
-    @Column(name = "first_name", nullable = false)
-    private String firstName;
-    @NotBlank(message = "temp")
-    @Column(name="last_name",nullable=false)
-    private String lastName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
-    @OneToOne(mappedBy = "user",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private EmployeeProfile employeeProfile;
+    private UserRole userRole;
 
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Employee employee;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Customer customer;
 }
