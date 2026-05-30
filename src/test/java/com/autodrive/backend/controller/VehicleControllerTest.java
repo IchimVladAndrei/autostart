@@ -21,19 +21,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CarControllerTest {
+class VehicleControllerTest {
 
     @Mock
     private VehicleService vehicleService;
 
     @InjectMocks
-    private CarController carController;
+    private VehicleController vehicleController;
 
     @Test
     void shouldReturnCars() {
         when(vehicleService.findAll()).thenReturn(List.of());
 
-        assertEquals(0, carController.getAll().size());
+        assertEquals(0, vehicleController
+                .getAll().size());
     }
 
     @Test
@@ -48,7 +49,7 @@ class CarControllerTest {
 
         when(vehicleService.create(any(Vehicle.class))).thenReturn(vehicle);
 
-        ResponseEntity<Vehicle> response = carController.create(vehicle);
+        ResponseEntity<Vehicle> response = vehicleController.create(vehicle);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());

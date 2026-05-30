@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,47 +29,80 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
-    public Vehicle findById(UUID id) {
+    public Vehicle findById(String vin) {
         return vehicleRepository
-                .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
+                .findById(vin)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found with VIN: " + vin));
     }
 
     public Vehicle create(Vehicle vehicle) {
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Vehicle must not be null");
+        }
+        if (vehicle.getVin() == null || vehicle
+                .getVin()
+                .isBlank()) {
+            throw new IllegalArgumentException("VIN is required");
+        }
+        if (vehicleRepository.existsById(vehicle.getVin())) {
+            throw new IllegalArgumentException("Vehicle with VIN already exists: " + vehicle.getVin());
+        }
+
         applyRelations(vehicle);
         return vehicleRepository.save(vehicle);
     }
 
-    public Vehicle update(UUID id, Vehicle vehicle) {
-        Vehicle existing = findById(id);
-        existing.setVin(vehicle.getVin());
-        existing.setModel(vehicle.getModel());
-        existing.setBrand(vehicle.getBrand());
-        existing.setExtraOptions(vehicle.getExtraOptions());
+    public Vehicle update(String vin, Vehicle vehicle) {
+        if (vin == null || vin.isBlank()) {
+            throw new IllegalArgumentException("VIN path variable is required");
+        }
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Vehicle payload must not be null");
+        }
+
+        Vehicle existing = findById(vin);
+
+
+        if (vehicle.getModel() != null) existing.setModel(vehicle.getModel());
+        if (vehicle.getBasePrice() != null) existing.setBasePrice(vehicle.getBasePrice());
+        if (vehicle.getYear() != null) existing.setYear(vehicle.getYear());
+        if (vehicle.getStatus() != null) existing.setStatus(vehicle.getStatus());
+        if (vehicle.getColor() != null) existing.setColor(vehicle.getColor());
+        if (vehicle.getMileage() != null) existing.setMileage(vehicle.getMileage());
+
+
+        if (vehicle.getBrand() != null) {
+            existing.setBrand(vehicle.getBrand());
+        }
+        if (vehicle.getExtraOptions() != null) {
+            existing.setExtraOptions(vehicle.getExtraOptions());
+        }
+
         applyRelations(existing);
         return vehicleRepository.save(existing);
     }
 
-    public void delete(UUID id) {
-        if (!vehicleRepository.existsById(id)) {
-            throw new EntityNotFoundException("Car not found with id: " + id);
+    public void delete(String vin) {
+        if (!vehicleRepository.existsById(vin)) {
+            throw new EntityNotFoundException("Vehicle not found with VIN: " + vin);
         }
-        vehicleRepository.deleteById(id);
+        vehicleRepository.deleteById(vin);
     }
 
     private void applyRelations(Vehicle vehicle) {
+
         if (vehicle.getBrand() != null && vehicle
                 .getBrand()
                 .getId() != null) {
+            UUID brandId = vehicle
+                    .getBrand()
+                    .getId();
             Brand brand = brandRepository
-                    .findById(vehicle
-                            .getBrand()
-                            .getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Brand not found with id: " + vehicle
-                            .getBrand()
-                            .getId()));
+                    .findById(brandId)
+                    .orElseThrow(() -> new EntityNotFoundException("Brand not found with id: " + brandId));
             vehicle.setBrand(brand);
         }
+
 
         if (vehicle.getExtraOptions() != null && !vehicle
                 .getExtraOptions()
@@ -78,14 +111,15 @@ public class VehicleService {
                     .getExtraOptions()
                     .stream()
                     .map(ExtraOption::getId)
-                    .filter(id -> id != null)
-                    .toList();
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
             if (!optionIds.isEmpty()) {
-                List<ExtraOption> options = extraOptionRepository.findAllById(optionIds);
-                if (options.size() != optionIds.size()) {
+                Set<ExtraOption> found = new HashSet<>(extraOptionRepository.findAllById(optionIds));
+                if (found.size() != optionIds.size()) {
                     throw new EntityNotFoundException("One or more extra options were not found");
                 }
-                vehicle.setExtraOptions(options);
+                vehicle.setExtraOptions(found);
             }
         }
     }

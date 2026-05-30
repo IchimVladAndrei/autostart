@@ -14,7 +14,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/cars")
-public class CarController {
+public class VehicleController {
 
     private final VehicleService vehicleService;
 
@@ -23,24 +23,25 @@ public class CarController {
         return vehicleService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Vehicle getById(@PathVariable UUID id) {
-        return vehicleService.findById(id);
+    @GetMapping("/{vin}")
+    public Vehicle getByVin(@PathVariable String vin) {
+        return vehicleService.findById(vin);
     }
 
     @PostMapping
     public ResponseEntity<Vehicle> create(@Valid @RequestBody Vehicle vehicle) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.create(vehicle));
+        Vehicle created = vehicleService.create(vehicle);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public Vehicle update(@PathVariable UUID id, @Valid @RequestBody Vehicle vehicle) {
-        return vehicleService.update(id, vehicle);
+    @PutMapping("/{vin}")
+    public Vehicle update(@PathVariable String vin, @Valid @RequestBody Vehicle vehicle) {
+        return vehicleService.update(vin, vehicle);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        vehicleService.delete(id);
+    @DeleteMapping("/{vin}")
+    public ResponseEntity<Void> delete(@PathVariable String vin) {
+        vehicleService.delete(vin);
         return ResponseEntity.noContent().build();
     }
 }
