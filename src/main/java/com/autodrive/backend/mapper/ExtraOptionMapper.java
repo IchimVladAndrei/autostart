@@ -20,11 +20,12 @@ public final class ExtraOptionMapper {
                 .build();
     }
 
-    public static ExtraOptionResponse toResponse(ExtraOption extraOption) {
+    public static ExtraOptionResponse toResponse(ExtraOption eopt) {
         return new ExtraOptionResponse(
-                extraOption.getName(),
-                extraOption.getDescription(),
-                extraOption.getPrice()
+                eopt.getName(),
+                eopt.getDescription(),
+                eopt.getPrice(),
+                eopt.getId()
         );
     }
 

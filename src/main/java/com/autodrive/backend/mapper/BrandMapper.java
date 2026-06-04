@@ -21,11 +21,12 @@ public final class BrandMapper {
                 .build();
     }
 
-    public static BrandResponse toResponse(Brand brand) {
+    public static BrandResponse toResponse(Brand b) {
         return new BrandResponse(
-                brand.getName(),
-                brand.getCountry(),
-                brand.getFoundedYear()
+                b.getName(),
+                b.getCountry(),
+                b.getFoundedYear(),
+                b.getId()
         );
     }
 
