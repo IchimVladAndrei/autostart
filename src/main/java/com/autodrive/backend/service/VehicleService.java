@@ -3,10 +3,10 @@ package com.autodrive.backend.service;
 import com.autodrive.backend.entity.car.Brand;
 import com.autodrive.backend.entity.car.ExtraOption;
 import com.autodrive.backend.entity.car.Vehicle;
+import com.autodrive.backend.exception.*;
 import com.autodrive.backend.repo.BrandRepository;
 import com.autodrive.backend.repo.ExtraOptionRepository;
 import com.autodrive.backend.repo.VehicleRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,20 +32,20 @@ public class VehicleService {
     public Vehicle findById(String vin) {
         return vehicleRepository
                 .findById(vin)
-                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found with VIN: " + vin));
+                .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with VIN: " + vin));
     }
 
     public Vehicle create(Vehicle vehicle) {
         if (vehicle == null) {
-            throw new IllegalArgumentException("Vehicle must not be null");
+            throw new InvalidVehicleException("Vehicle must not be null");
         }
         if (vehicle.getVin() == null || vehicle
                 .getVin()
                 .isBlank()) {
-            throw new IllegalArgumentException("VIN is required");
+            throw new InvalidVinException("VIN is required");
         }
         if (vehicleRepository.existsById(vehicle.getVin())) {
-            throw new IllegalArgumentException("Vehicle with VIN already exists: " + vehicle.getVin());
+            throw new VehicleAlreadyExistsException("Vehicle with VIN already exists: " + vehicle.getVin());
         }
 
         applyRelations(vehicle);
@@ -54,10 +54,10 @@ public class VehicleService {
 
     public Vehicle update(String vin, Vehicle vehicle) {
         if (vin == null || vin.isBlank()) {
-            throw new IllegalArgumentException("VIN path variable is required");
+            throw new InvalidVinException("VIN path variable is required");
         }
         if (vehicle == null) {
-            throw new IllegalArgumentException("Vehicle payload must not be null");
+            throw new InvalidVehicleException("Vehicle must not be null");
         }
 
         Vehicle existing = findById(vin);
@@ -78,13 +78,15 @@ public class VehicleService {
             existing.setExtraOptions(vehicle.getExtraOptions());
         }
 
+
         applyRelations(existing);
+
         return vehicleRepository.save(existing);
     }
 
     public void delete(String vin) {
         if (!vehicleRepository.existsById(vin)) {
-            throw new EntityNotFoundException("Vehicle not found with VIN: " + vin);
+            throw new VehicleNotFoundException("Vehicle not found with VIN: " + vin);
         }
         vehicleRepository.deleteById(vin);
     }
@@ -99,7 +101,7 @@ public class VehicleService {
                     .getId();
             Brand brand = brandRepository
                     .findById(brandId)
-                    .orElseThrow(() -> new EntityNotFoundException("Brand not found with id: " + brandId));
+                    .orElseThrow(() -> new BrandNotFoundException("Brand not found with id: " + brandId));
             vehicle.setBrand(brand);
         }
 
@@ -117,7 +119,7 @@ public class VehicleService {
             if (!optionIds.isEmpty()) {
                 Set<ExtraOption> found = new HashSet<>(extraOptionRepository.findAllById(optionIds));
                 if (found.size() != optionIds.size()) {
-                    throw new EntityNotFoundException("One or more extra options were not found");
+                    throw new ExtraOptionNotFoundException("One or more extra options were not found");
                 }
                 vehicle.setExtraOptions(found);
             }
