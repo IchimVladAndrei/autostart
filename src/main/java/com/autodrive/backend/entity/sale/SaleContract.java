@@ -1,11 +1,10 @@
 package com.autodrive.backend.entity.sale;
 
 import com.autodrive.backend.entity.user.Customer;
-import com.autodrive.backend.entity.car.Vehicle;
+import com.autodrive.backend.entity.vehicle.Vehicle;
 import com.autodrive.backend.entity.user.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;

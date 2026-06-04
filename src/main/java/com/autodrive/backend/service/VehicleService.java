@@ -1,9 +1,16 @@
 package com.autodrive.backend.service;
 
-import com.autodrive.backend.entity.car.Brand;
-import com.autodrive.backend.entity.car.ExtraOption;
-import com.autodrive.backend.entity.car.Vehicle;
-import com.autodrive.backend.exception.*;
+import com.autodrive.backend.dto.vehicle.VehicleCreateRequest;
+import com.autodrive.backend.dto.vehicle.VehicleResponse;
+import com.autodrive.backend.dto.vehicle.VehicleUpdateRequest;
+import com.autodrive.backend.entity.vehicle.Brand;
+import com.autodrive.backend.entity.vehicle.ExtraOption;
+import com.autodrive.backend.entity.vehicle.Vehicle;
+import com.autodrive.backend.exception.BrandNotFoundException;
+import com.autodrive.backend.exception.ExtraOptionNotFoundException;
+import com.autodrive.backend.exception.VehicleAlreadyExistsException;
+import com.autodrive.backend.exception.VehicleNotFoundException;
+import com.autodrive.backend.mapper.VehicleMapper;
 import com.autodrive.backend.repo.BrandRepository;
 import com.autodrive.backend.repo.ExtraOptionRepository;
 import com.autodrive.backend.repo.VehicleRepository;
@@ -11,7 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,64 +34,48 @@ public class VehicleService {
     private final ExtraOptionRepository extraOptionRepository;
 
     @Transactional(readOnly = true)
-    public List<Vehicle> findAll() {
-        return vehicleRepository.findAll();
+    public List<VehicleResponse> findAll() {
+
+        return vehicleRepository
+                .findAll()
+                .stream()
+                .map(VehicleMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public Vehicle findById(String vin) {
-        return vehicleRepository
-                .findById(vin)
-                .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with VIN: " + vin));
+    public VehicleResponse findById(String vin) {
+        Vehicle vehicle = getVehicleOrThrow(vin);
+        return VehicleMapper.toResponse(vehicle);
+
     }
 
-    public Vehicle create(Vehicle vehicle) {
-        if (vehicle == null) {
-            throw new InvalidVehicleException("Vehicle must not be null");
-        }
-        if (vehicle.getVin() == null || vehicle
-                .getVin()
-                .isBlank()) {
-            throw new InvalidVinException("VIN is required");
-        }
-        if (vehicleRepository.existsById(vehicle.getVin())) {
-            throw new VehicleAlreadyExistsException("Vehicle with VIN already exists: " + vehicle.getVin());
+    public VehicleResponse create(VehicleCreateRequest request) {
+
+        if (vehicleRepository.existsById(request.vin())) {
+            throw new VehicleAlreadyExistsException("Vehicle with VIN already exists: " + request.vin());
         }
 
-        applyRelations(vehicle);
-        return vehicleRepository.save(vehicle);
+        Vehicle vehicle = VehicleMapper.toEntity(request);
+
+        resolveRelations(vehicle, request.brandId(), request.extraOptionIds());
+
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+        return VehicleMapper.toResponse(savedVehicle);
     }
 
-    public Vehicle update(String vin, Vehicle vehicle) {
-        if (vin == null || vin.isBlank()) {
-            throw new InvalidVinException("VIN path variable is required");
-        }
-        if (vehicle == null) {
-            throw new InvalidVehicleException("Vehicle must not be null");
-        }
+    public VehicleResponse update(String vin, VehicleUpdateRequest request) {
 
-        Vehicle existing = findById(vin);
+        Vehicle existingVehicle = getVehicleOrThrow(vin);
 
+        VehicleMapper.applyUpdate(existingVehicle, request);
 
-        if (vehicle.getModel() != null) existing.setModel(vehicle.getModel());
-        if (vehicle.getBasePrice() != null) existing.setBasePrice(vehicle.getBasePrice());
-        if (vehicle.getYear() != null) existing.setYear(vehicle.getYear());
-        if (vehicle.getStatus() != null) existing.setStatus(vehicle.getStatus());
-        if (vehicle.getColor() != null) existing.setColor(vehicle.getColor());
-        if (vehicle.getMileage() != null) existing.setMileage(vehicle.getMileage());
+        resolveRelations(existingVehicle, request.brandId(), request.extraOptionIds());
 
+        Vehicle updatedVehicle = vehicleRepository.save(existingVehicle);
 
-        if (vehicle.getBrand() != null) {
-            existing.setBrand(vehicle.getBrand());
-        }
-        if (vehicle.getExtraOptions() != null) {
-            existing.setExtraOptions(vehicle.getExtraOptions());
-        }
+        return VehicleMapper.toResponse(updatedVehicle);
 
-
-        applyRelations(existing);
-
-        return vehicleRepository.save(existing);
     }
 
     public void delete(String vin) {
@@ -91,37 +85,31 @@ public class VehicleService {
         vehicleRepository.deleteById(vin);
     }
 
-    private void applyRelations(Vehicle vehicle) {
 
-        if (vehicle.getBrand() != null && vehicle
-                .getBrand()
-                .getId() != null) {
-            UUID brandId = vehicle
-                    .getBrand()
-                    .getId();
+    private Vehicle getVehicleOrThrow(String vin) {
+        return vehicleRepository
+                .findById(vin)
+                .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with VIN: " + vin));
+    }
+
+    private void resolveRelations(Vehicle vehicle, UUID brandId, List<UUID> optionIds) {
+        if (brandId != null) {
             Brand brand = brandRepository
                     .findById(brandId)
                     .orElseThrow(() -> new BrandNotFoundException("Brand not found with id: " + brandId));
             vehicle.setBrand(brand);
         }
 
-
-        if (vehicle.getExtraOptions() != null && !vehicle
-                .getExtraOptions()
-                .isEmpty()) {
-            List<UUID> optionIds = vehicle
-                    .getExtraOptions()
-                    .stream()
-                    .map(ExtraOption::getId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            if (!optionIds.isEmpty()) {
-                Set<ExtraOption> found = new HashSet<>(extraOptionRepository.findAllById(optionIds));
-                if (found.size() != optionIds.size()) {
+        if (optionIds != null) {
+            if (optionIds.isEmpty()) {
+                // if they passed an empty list, they want to clear the options
+                vehicle.setExtraOptions(new HashSet<>());
+            } else {
+                Set<ExtraOption> foundOptions = new HashSet<>(extraOptionRepository.findAllById(optionIds));
+                if (foundOptions.size() != optionIds.size()) {
                     throw new ExtraOptionNotFoundException("One or more extra options were not found");
                 }
-                vehicle.setExtraOptions(found);
+                vehicle.setExtraOptions(foundOptions);
             }
         }
     }

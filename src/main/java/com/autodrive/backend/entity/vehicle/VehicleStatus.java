@@ -1,4 +1,4 @@
-package com.autodrive.backend.entity.car;
+package com.autodrive.backend.entity.vehicle;
 
 public enum VehicleStatus {
     AVAILABLE,
