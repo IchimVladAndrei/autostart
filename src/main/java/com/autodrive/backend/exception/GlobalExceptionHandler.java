@@ -1,6 +1,7 @@
 package com.autodrive.backend.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,11 +14,13 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(VehicleNotFoundException.class)
     public ResponseEntity<ErrorDetails> handleVehicleNotFoundException(VehicleNotFoundException e, WebRequest request) {
+        log.warn("Vehicle not found: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -29,7 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VehicleAlreadyExistsException.class)
     public ResponseEntity<ErrorDetails> handleVehicleAlreadyExists(VehicleAlreadyExistsException e, WebRequest request) {
-
+        log.warn("Vehicle already exists: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -42,6 +45,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidVehicleException.class)
     public ResponseEntity<ErrorDetails> handleInvalidVehicle(InvalidVehicleException e, WebRequest request) {
+        log.warn("Invalid vehicle data: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -53,6 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidVinException.class)
     public ResponseEntity<ErrorDetails> handleInvalidVinException(InvalidVinException e, WebRequest request) {
+        log.warn("Invalid VIN: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -64,6 +69,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException e, WebRequest request) {
+        log.warn("Validation failed: {}", e.getMessage());
         Map<String, String> errors = new HashMap<>();
 
         e
@@ -86,6 +92,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDetails> handleGlobalException(Exception e, WebRequest request) {
+        log.error("Critical internal server error occurred:{}", e.getMessage(), e);
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 "INTERNAL SERVER ERROR",
@@ -97,6 +104,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDetails> handleIllegalArgument(IllegalArgumentException e, WebRequest request) {
+        log.error("Illegal argument: {}", e.getMessage(), e);
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -108,6 +116,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorDetails> handleEntityNotFound(EntityNotFoundException e, WebRequest request) {
+        log.warn("Entity not found: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -120,6 +129,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BrandNotFoundException.class)
     public ResponseEntity<ErrorDetails> handleBrandNotFound(BrandNotFoundException e, WebRequest request) {
+        log.warn("Brand not found: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
@@ -131,6 +141,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExtraOptionNotFoundException.class)
     public ResponseEntity<ErrorDetails> handleExtraOptionsNotFound(ExtraOptionNotFoundException e, WebRequest request) {
+        log.warn("Extra option not found: {}", e.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 e.getMessage(),
