@@ -1,6 +1,6 @@
 package com.autodrive.backend.repo;
 
-import com.autodrive.backend.entity.car.Brand;
+import com.autodrive.backend.entity.vehicle.Brand;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
