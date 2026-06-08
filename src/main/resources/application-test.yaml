@@ -18,3 +18,8 @@ spring:
   h2:
     console:
       enabled: true
+
+app:
+  jwt:
+    secret: test-secret-key-with-at-least-32-characters
+    expiration-ms: 3600000

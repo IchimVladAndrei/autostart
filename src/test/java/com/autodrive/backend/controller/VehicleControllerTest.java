@@ -1,6 +1,8 @@
 package com.autodrive.backend.controller;
 
-import com.autodrive.backend.entity.car.Vehicle;
+import com.autodrive.backend.dto.vehicle.VehicleCreateRequest;
+import com.autodrive.backend.dto.vehicle.VehicleResponse;
+import com.autodrive.backend.entity.vehicle.VehicleStatus;
 import com.autodrive.backend.service.VehicleService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,20 +40,35 @@ class VehicleControllerTest {
 
     @Test
     void shouldCreateCar() {
-        Vehicle vehicle = Vehicle
-                .builder()
-                .id(UUID.randomUUID())
-                .vin("WVWZZZ1JZXW000001")
-                .model("Golf")
-                .price(new BigDecimal("10000.00"))
-                .build();
+        VehicleCreateRequest request = new VehicleCreateRequest(
+                "WVWZZZ1JZXW000001",
+                "Golf",
+                new BigDecimal("10000.00"),
+                2020,
+                VehicleStatus.AVAILABLE,
+                "Black",
+                0,
+                null,
+                List.of()
+        );
+        VehicleResponse created = new VehicleResponse(
+                request.vin(),
+                request.model(),
+                request.basePrice(),
+                request.year(),
+                request.status(),
+                request.color(),
+                request.mileage(),
+                null,
+                List.of()
+        );
 
-        when(vehicleService.create(any(Vehicle.class))).thenReturn(vehicle);
+        when(vehicleService.create(any(VehicleCreateRequest.class))).thenReturn(created);
 
-        ResponseEntity<Vehicle> response = vehicleController.create(vehicle);
+        ResponseEntity<VehicleResponse> response = vehicleController.create(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        verify(vehicleService).create(any(Vehicle.class));
+        verify(vehicleService).create(any(VehicleCreateRequest.class));
     }
 }
