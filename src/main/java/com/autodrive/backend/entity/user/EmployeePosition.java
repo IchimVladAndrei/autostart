@@ -6,5 +6,9 @@ public enum EmployeePosition {
 	SERVICE_ADVISOR,
 	MECHANIC,
 	FINANCE_SPECIALIST,
-	ADMINISTRATOR
+	ADMINISTRATOR;
+
+	public String authority() {
+		return "POSITION_" + name();
+	}
 }

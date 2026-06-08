@@ -5,6 +5,7 @@ import com.autodrive.backend.dto.auth.LoginResponse;
 import com.autodrive.backend.dto.auth.RegisterRequest;
 import com.autodrive.backend.dto.auth.RegisterResponse;
 import com.autodrive.backend.entity.user.User;
+import com.autodrive.backend.entity.user.UserRole;
 import com.autodrive.backend.repo.UserRepository;
 import com.autodrive.backend.security.JwtProperties;
 import com.autodrive.backend.security.JwtService;
@@ -44,7 +45,7 @@ public class AuthService {
                 .lastName(request.lastName())
                 .phone(request.phone())
                 .password(request.password())
-                .role(request.userRole())
+                .role(UserRole.USER)
                 .build();
 
         User savedUser = userRepository.save(user);

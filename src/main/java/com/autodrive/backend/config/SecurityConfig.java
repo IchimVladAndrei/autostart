@@ -1,5 +1,7 @@
 package com.autodrive.backend.config;
 
+import com.autodrive.backend.entity.user.EmployeePosition;
+import com.autodrive.backend.entity.user.UserRole;
 import com.autodrive.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,8 +29,10 @@ public class SecurityConfig {
                 .logout(logout -> logout.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/error").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/cars/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/v1/cars/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/cars/**").hasAnyAuthority(
+                                UserRole.ADMIN.authority(),
+                                EmployeePosition.MANAGER.authority()
+                        )
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> response.sendError(401))
