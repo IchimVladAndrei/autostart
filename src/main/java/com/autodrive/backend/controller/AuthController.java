@@ -1,9 +1,6 @@
 package com.autodrive.backend.controller;
 
-import com.autodrive.backend.dto.auth.LoginRequest;
-import com.autodrive.backend.dto.auth.LoginResponse;
-import com.autodrive.backend.dto.auth.RegisterRequest;
-import com.autodrive.backend.dto.auth.RegisterResponse;
+import com.autodrive.backend.dto.auth.*;
 import com.autodrive.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,16 +25,47 @@ public class AuthController {
         try {
             return ResponseEntity.ok(authService.login(request));
         } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity
+                    .status(401)
+                    .build();
         }
     }
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(authService.register(request));
         } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .build();
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
+        try {
+            return ResponseEntity.ok(authService.refresh(request));
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity
+                    .status(401)
+                    .build();
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody TokenRefreshRequest request) {
+        try {
+            authService.logout(request);
+            return ResponseEntity
+                    .ok()
+                    .build();
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity
+                    .status(401)
+                    .build();
         }
     }
 }

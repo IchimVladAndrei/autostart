@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,6 +82,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         } catch (MalformedJwtException | IllegalArgumentException ex) {
             writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or malformed JWT format", request.getRequestURI());
+            return;
+        } catch (SignatureException ex) {
+            writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT Signature verification failed", request.getRequestURI());
             return;
         }
     }
