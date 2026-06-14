@@ -28,15 +28,34 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/error").permitAll()
-                        .requestMatchers("/api/v1/cars/**").hasAnyAuthority(
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/error")
+                        .permitAll()
+                        .requestMatchers("/api/v1/cars/**")
+                        .hasAnyAuthority(
                                 UserRole.ADMIN.authority(),
                                 EmployeePosition.MANAGER.authority()
                         )
-                        .anyRequest().authenticated())
+                        .anyRequest()
+                        .authenticated())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> response.sendError(401))
-                        .accessDeniedHandler((request, response, accessDeniedException) -> response.sendError(403)))
+
+                        .authenticationEntryPoint((request, response, authException) ->
+                                JwtAuthenticationFilter.writeErrorResponse(
+                                        response,
+                                        401,
+                                        "Authentication is required to access this resource",
+                                        request.getRequestURI()
+                                )
+                        )
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                JwtAuthenticationFilter.writeErrorResponse(
+                                        response,
+                                        403,
+                                        "Access Denied: You don't have permissions to access this endpoint",
+                                        request.getRequestURI()
+                                )
+                        )
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
