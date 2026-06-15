@@ -90,8 +90,8 @@ public class GlobalExceptionHandler {
 
     }
 
-    @ExceptionHandler(java.lang.Exception.class)
-    public ResponseEntity<ErrorDetails> handleGlobalException(java.lang.Exception e, WebRequest request) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDetails> handleGlobalException(Exception e, WebRequest request) {
         log.error("Critical internal server error occurred:{}", e.getMessage(), e);
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
