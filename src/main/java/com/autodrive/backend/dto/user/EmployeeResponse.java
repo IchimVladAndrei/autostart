@@ -12,6 +12,7 @@ public record EmployeeResponse(String name,
 
                                String status,
                                BigDecimal baseSalary,
+                               BigDecimal bonus,
                                LocalDate hireDate,
                                UUID userId) {
 }

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record CustomerUpdateRequest(String name,
 
-                                    @Size(min = 13, max = 13, message = "CNP must be exactly 13 characters")
+                                    @Pattern(regexp = "^\\d{13}$", message = "CNP must contain exactly 13 digits")
                                     String cnp,
 
                                     @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 characters")

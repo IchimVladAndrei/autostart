@@ -9,13 +9,21 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
 
   h2:
     console:
       enabled: true
 
+logging:
+  level:
+    com.autodrive.backend: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
 app:
   jwt:
-    secret: test-secret-key-with-at-least-32-characters
+    secret: autostart-h2-test-jwt-signing-key-2026-minimum-32-chars
     expiration-ms: 3600000
+    refresh-expiration-ms: 604800000
+    remember-me-refresh-expiration-ms: 2592000000

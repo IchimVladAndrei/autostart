@@ -10,4 +10,11 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     @EntityGraph(attributePaths = "employee")
     Optional<User> findByEmail(String email);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, UUID id);
+
+    @EntityGraph(attributePaths = {"employee", "customer"})
+    Optional<User> findWithEmployeeAndCustomerById(UUID id);
 }

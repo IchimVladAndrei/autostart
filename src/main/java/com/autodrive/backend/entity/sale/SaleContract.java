@@ -6,6 +6,7 @@ import com.autodrive.backend.entity.user.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -27,9 +28,11 @@ public class SaleContract {
     private UUID id;
 
     @NotNull(message = "Contract date is required")
+    @PastOrPresent(message = "Contract date cannot be in the future")
     @Column(name = "contract_date", nullable = false)
     private LocalDateTime contractDate; //automatic or manual?
 
+    @NotNull(message = "Sale price is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Sale price must be greater or equal than zero ")
     @Column(name = "sale_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
@@ -54,4 +57,3 @@ public class SaleContract {
     @JoinColumn(name = "vehicle_vin", referencedColumnName = "vin", nullable = false, unique = true)
     private Vehicle vehicle;
 }
-

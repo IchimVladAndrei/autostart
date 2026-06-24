@@ -2,9 +2,7 @@ package com.autodrive.backend.entity.vehicle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -34,9 +32,7 @@ public class ExtraOption {
     @Size(max = 500, message = "Description must be at most 500 characters")
     private String description;
 
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be strictly positive")
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(precision = 12, scale = 2)
     private BigDecimal price;
 
     @JsonIgnore

@@ -2,9 +2,7 @@ package com.autodrive.backend.entity.vehicle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -30,12 +28,11 @@ public class Brand {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @NotBlank(message = "Country is required")
     @Size(min = 2, max = 100, message = "Country must be between 2 and 100 characters")
+    @Column(length = 100)
     private String country;
 
-    @NotNull(message = "Founded year is required")
-    @Min(value = 1800, message = "Founded year must be greater than or equal to 1800")
+    @Column(name = "founded_year")
     private Integer foundedYear;
 
     @JsonIgnore

@@ -4,12 +4,27 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/autostart}
+    driverClassName: ${DB_DRIVER:org.postgresql.Driver}
+    username: ${DB_USER:postgres}
     password: ${DB_PASSWORD}
 
   jpa:
+    database-platform: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+
+logging:
+  level:
+    com.autodrive.backend: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+    remember-me-refresh-expiration-ms: ${JWT_REMEMBER_ME_REFRESH_EXPIRATION_MS:2592000000}
 

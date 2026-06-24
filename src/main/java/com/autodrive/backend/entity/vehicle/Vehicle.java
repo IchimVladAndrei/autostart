@@ -37,6 +37,7 @@ public class Vehicle {
 
     @NotNull(message = "Year is required")
     @Min(value = 1900, message = "Year must be valid")
+    @Column(name = "\"year\"", nullable = false)
     private Integer year;
 
     @Enumerated(EnumType.STRING)

@@ -6,11 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Entity
 @Getter
@@ -20,8 +18,6 @@ import java.util.regex.Pattern;
 @Builder
 @Table(name = "users")
 public class User {
-
-    private static final Pattern BCRYPT_HASH = Pattern.compile("^\\$2[aby]\\$\\d{2}\\$.{53}$");
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -57,17 +53,9 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Employee employee;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Customer customer;
-
-    @PrePersist
-    @PreUpdate
-    private void hashPasswordIfNeeded() {
-        if (password != null && !BCRYPT_HASH.matcher(password).matches()) {
-            password = new BCryptPasswordEncoder().encode(password);
-        }
-    }
 }

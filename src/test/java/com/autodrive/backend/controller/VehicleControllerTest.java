@@ -1,5 +1,6 @@
 package com.autodrive.backend.controller;
 
+import com.autodrive.backend.dto.common.PageResponse;
 import com.autodrive.backend.dto.vehicle.VehicleCreateRequest;
 import com.autodrive.backend.dto.vehicle.VehicleResponse;
 import com.autodrive.backend.entity.vehicle.VehicleStatus;
@@ -13,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,10 +32,20 @@ class VehicleControllerTest {
 
     @Test
     void shouldReturnCars() {
-        when(vehicleService.findAll()).thenReturn(List.of());
+        when(vehicleService.findAll(0, 10, "vin", "asc")).thenReturn(new PageResponse<>(
+                java.util.List.of(),
+                0,
+                10,
+                0,
+                0,
+                true,
+                true
+        ));
 
         assertEquals(0, vehicleController
-                .getAll().size());
+                .getAll(0, 10, "vin", "asc")
+                .content()
+                .size());
     }
 
     @Test
@@ -49,7 +59,7 @@ class VehicleControllerTest {
                 "Black",
                 0,
                 null,
-                List.of()
+                java.util.List.of()
         );
         VehicleResponse created = new VehicleResponse(
                 request.vin(),
@@ -60,7 +70,7 @@ class VehicleControllerTest {
                 request.color(),
                 request.mileage(),
                 null,
-                List.of()
+                java.util.List.of()
         );
 
         when(vehicleService.create(any(VehicleCreateRequest.class))).thenReturn(created);

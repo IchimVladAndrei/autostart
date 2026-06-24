@@ -22,7 +22,14 @@ public final class PaymentMapper {
     }
 
     public static PaymentResponse toResponse(Payment p) {
-        return new PaymentResponse(p.getAmount(), p.getType(), p.getStatus(), p.getPaymentDate(),p.getId());
+        return new PaymentResponse(
+                p.getAmount(),
+                p.getType(),
+                p.getStatus(),
+                p.getPaymentDate(),
+                p.getId(),
+                p.getContract() != null ? p.getContract().getId() : null
+        );
     }
 
 

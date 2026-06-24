@@ -31,6 +31,7 @@ public class Customer {
     private String name;
 
     @NotBlank(message = "CNP is required")
+    @Pattern(regexp = "^\\d{13}$", message = "CNP must contain exactly 13 digits")
     @Column(unique = true, nullable = false, length = 13)
     private String cnp;
 
