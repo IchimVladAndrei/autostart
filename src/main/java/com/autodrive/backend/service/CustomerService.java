@@ -68,7 +68,7 @@ public class CustomerService {
 
     public void delete(UUID id) {
         Customer customer = getCustomer(id);
-        if (saleRepository.existsByCustomerUserId(id)) {
+        if (saleRepository.existsByCustomerId(id)) {
             throw new ConflictException("Cannot delete customer referenced by sale contracts");
         }
         if (customer.getUser() != null) {

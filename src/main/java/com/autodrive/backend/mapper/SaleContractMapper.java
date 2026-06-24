@@ -16,6 +16,9 @@ public final class SaleContractMapper {
                 .salePrice(req.salePrice())
                 .notes(req.notes())
                 .status(req.status())
+                .vehicleVin(req.vehicleVin())
+                .customerId(req.customerId())
+                .employeeId(req.employeeId())
                 .build();
     }
 
@@ -26,15 +29,9 @@ public final class SaleContractMapper {
                 sc.getNotes(),
                 sc.getStatus(),
                 sc.getId(),
-                sc.getVehicle() != null ? sc
-                                          .getVehicle()
-                                          .getVin() : null,
-                sc.getCustomer() != null ? sc
-                                           .getCustomer()
-                                           .getUserId() : null,
-                sc.getEmployee() != null ? sc
-                                           .getEmployee()
-                                           .getUserId() : null
+                sc.getVehicleVin(),
+                sc.getCustomerId(),
+                sc.getEmployeeId()
 
         );
     }

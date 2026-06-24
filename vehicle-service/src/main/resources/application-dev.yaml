@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    com.autodrive.vehicle: DEBUG
+    com.autodrive.common: DEBUG
+    org.hibernate.SQL: DEBUG

@@ -6,8 +6,6 @@ import com.autodrive.backend.dto.sale.SaleContractResponse;
 import com.autodrive.backend.dto.sale.SaleContractUpdateRequest;
 import com.autodrive.backend.entity.sale.SaleContract;
 import com.autodrive.backend.entity.sale.SaleContractStatus;
-import com.autodrive.backend.entity.user.Customer;
-import com.autodrive.backend.entity.user.Employee;
 import com.autodrive.backend.entity.vehicle.Vehicle;
 import com.autodrive.backend.entity.vehicle.VehicleStatus;
 import com.autodrive.backend.exception.ConflictException;
@@ -54,17 +52,11 @@ public class SaleContractService {
         if (saleRepository.existsByVehicleVin(request.vehicleVin())) {
             throw new DuplicateResourceException("Vehicle already has a sale contract: " + request.vehicleVin());
         }
-        Customer customer = customerRepository.findById(request.customerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.customerId()));
-        Employee employee = employeeRepository.findById(request.employeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + request.employeeId()));
-        Vehicle vehicle = vehicleRepository.findById(request.vehicleVin())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with VIN: " + request.vehicleVin()));
+        ensureCustomerExists(request.customerId());
+        ensureEmployeeExists(request.employeeId());
+        ensureVehicleExists(request.vehicleVin());
 
         SaleContract contract = SaleContractMapper.toEntity(request);
-        contract.setCustomer(customer);
-        contract.setEmployee(employee);
-        contract.setVehicle(vehicle);
         updateVehicleStatusForCompletedContract(contract);
         return SaleContractMapper.toResponse(saleRepository.save(contract));
     }
@@ -89,9 +81,29 @@ public class SaleContractService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sale contract not found with id: " + id));
     }
 
+    private void ensureCustomerExists(UUID customerId) {
+        if (!customerRepository.existsById(customerId)) {
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
+        }
+    }
+
+    private void ensureEmployeeExists(UUID employeeId) {
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new ResourceNotFoundException("Employee not found with id: " + employeeId);
+        }
+    }
+
+    private void ensureVehicleExists(String vehicleVin) {
+        if (!vehicleRepository.existsById(vehicleVin)) {
+            throw new ResourceNotFoundException("Vehicle not found with VIN: " + vehicleVin);
+        }
+    }
+
     private void updateVehicleStatusForCompletedContract(SaleContract contract) {
-        if (contract.getStatus() == SaleContractStatus.COMPLETED && contract.getVehicle() != null) {
-            contract.getVehicle().setStatus(VehicleStatus.SOLD);
+        if (contract.getStatus() == SaleContractStatus.COMPLETED && contract.getVehicleVin() != null) {
+            Vehicle vehicle = vehicleRepository.findById(contract.getVehicleVin())
+                    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with VIN: " + contract.getVehicleVin()));
+            vehicle.setStatus(VehicleStatus.SOLD);
         }
     }
 }

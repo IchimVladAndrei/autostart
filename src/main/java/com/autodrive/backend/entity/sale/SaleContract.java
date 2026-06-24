@@ -1,8 +1,5 @@
 package com.autodrive.backend.entity.sale;
 
-import com.autodrive.backend.entity.user.Customer;
-import com.autodrive.backend.entity.vehicle.Vehicle;
-import com.autodrive.backend.entity.user.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "sales")
+@Table(name = "sales", schema = "sales")
 public class SaleContract {
 
     @Id
@@ -45,15 +42,15 @@ public class SaleContract {
     @NotNull(message = "Status is required")
     private SaleContractStatus status;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    @NotNull(message = "Customer ID is required")
+    @Column(name = "customer_id", nullable = false)
+    private UUID customerId;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "employee_id", nullable = false)
-    private Employee employee;
+    @NotNull(message = "Employee ID is required")
+    @Column(name = "employee_id", nullable = false)
+    private UUID employeeId;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "vehicle_vin", referencedColumnName = "vin", nullable = false, unique = true)
-    private Vehicle vehicle;
+    @NotNull(message = "Vehicle VIN is required")
+    @Column(name = "vehicle_vin", nullable = false, unique = true, length = 17)
+    private String vehicleVin;
 }

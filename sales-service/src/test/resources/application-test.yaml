@@ -1,0 +1,26 @@
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:salesdb;INIT=CREATE SCHEMA IF NOT EXISTS sales
+    driverClassName: org.h2.Driver
+    username: tester
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+app:
+  internal:
+    token: test-internal-token
+  services:
+    auth-user-url: http://localhost:8081
+    vehicle-url: http://localhost:8082
+  jwt:
+    secret: autostart-sales-test-jwt-signing-key-2026-minimum-32-chars
+    expiration-ms: 3600000
+    refresh-expiration-ms: 604800000
+    remember-me-refresh-expiration-ms: 2592000000

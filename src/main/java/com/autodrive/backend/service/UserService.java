@@ -72,7 +72,7 @@ public class UserService {
         if (user.getCustomer() != null || user.getEmployee() != null) {
             throw new ConflictException("Cannot delete user linked to customer or employee profile");
         }
-        if (saleRepository.existsByCustomerUserId(id) || saleRepository.existsByEmployeeUserId(id)) {
+        if (saleRepository.existsByCustomerId(id) || saleRepository.existsByEmployeeId(id)) {
             throw new ConflictException("Cannot delete user linked to sales history");
         }
         userRepository.delete(user);

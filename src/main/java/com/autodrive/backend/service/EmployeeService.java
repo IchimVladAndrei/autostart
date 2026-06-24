@@ -68,7 +68,7 @@ public class EmployeeService {
 
     public void delete(UUID id) {
         Employee employee = getEmployee(id);
-        if (saleRepository.existsByEmployeeUserId(id)) {
+        if (saleRepository.existsByEmployeeId(id)) {
             throw new ConflictException("Cannot delete employee referenced by sale contracts");
         }
         if (employee.getUser() != null) {
