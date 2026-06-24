@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "extra_options")
+@Table(name = "extra_options", schema = "vehicle")
 public class ExtraOption {
 
     @Id

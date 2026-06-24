@@ -16,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "vehicles")
+@Table(name = "vehicles", schema = "vehicle")
 public class Vehicle {
 
     @Id
@@ -60,6 +60,7 @@ public class Vehicle {
     @ManyToMany
     @JoinTable(
             name = "vehicle_extra_option",
+            schema = "vehicle",
             joinColumns = @JoinColumn(name = "vehicle_vin"),
             inverseJoinColumns = @JoinColumn(name = "option_id")
     )
