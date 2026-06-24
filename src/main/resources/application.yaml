@@ -4,9 +4,9 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:h2:mem:devdb}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
 
   jpa:
     hibernate:

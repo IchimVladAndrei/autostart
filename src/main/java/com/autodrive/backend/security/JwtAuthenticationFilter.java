@@ -1,7 +1,7 @@
 package com.autodrive.backend.security;
 
 import com.autodrive.backend.entity.user.User;
-import com.autodrive.backend.exception.ErrorDetails;
+import com.autodrive.backend.dto.common.ApiErrorResponse;
 import com.autodrive.backend.repo.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -41,10 +41,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         response.setCharacterEncoding("UTF-8");
 
-        ErrorDetails errorDetails = new ErrorDetails(
+        ApiErrorResponse errorDetails = new ApiErrorResponse(
                 LocalDateTime.now(),
+                status,
+                status == 401 ? "Unauthorized" : "Forbidden",
                 message,
-                "uri=" + path,
+                path,
                 null
         );
 
@@ -87,6 +89,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT Signature verification failed", request.getRequestURI());
             return;
         }
+
+        filterChain.doFilter(request, response);
     }
 
     private void authenticate(User user) {
