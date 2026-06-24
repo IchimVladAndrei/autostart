@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping({"/api/v1/cars", "/api/v1/vehicles"})
+@RequestMapping("/api/v1/vehicles")
 public class VehicleController {
 
     private final VehicleService vehicleService;

@@ -37,7 +37,6 @@ public class VehicleService {
     private final BrandRepository brandRepository;
     private final ExtraOptionRepository extraOptionRepository;
     private final SaleRepository saleRepository;
-    private final LegacySchemaCompatibilityService legacySchemaCompatibilityService;
     private static final Set<String> SORTS = Set.of("vin", "model", "basePrice", "year", "status", "color", "mileage");
 
     @Transactional(readOnly = true)
@@ -64,7 +63,6 @@ public class VehicleService {
         resolveRelations(vehicle, request.brandId(), request.extraOptionIds());
 
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
-        legacySchemaCompatibilityService.ensureLegacyCar(savedVehicle);
         return VehicleMapper.toResponse(savedVehicle);
     }
 
@@ -77,7 +75,6 @@ public class VehicleService {
         resolveRelations(existingVehicle, request.brandId(), request.extraOptionIds());
 
         Vehicle updatedVehicle = vehicleRepository.save(existingVehicle);
-        legacySchemaCompatibilityService.ensureLegacyCar(updatedVehicle);
 
         return VehicleMapper.toResponse(updatedVehicle);
 

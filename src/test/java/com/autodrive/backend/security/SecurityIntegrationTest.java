@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,12 +23,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -40,8 +39,6 @@ class SecurityIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
     @Autowired
     private JwtService jwtService;
     @Autowired
@@ -82,6 +79,7 @@ class SecurityIntegrationTest {
     @Test
     void publicRegisterIsAccessibleAndAnonymousProtectedReadIsRejected() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"email":"register@example.com","firstName":"Reg","lastName":"User","phone":"0711111111","password":"secret1"}
@@ -90,6 +88,42 @@ class SecurityIntegrationTest {
 
         mockMvc.perform(get("/api/v1/brands"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void csrfTokenEndpointIsPublic() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/csrf"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void repeatedLoginRotatesExistingRefreshToken() throws Exception {
+        userRepository.save(User.builder()
+                .email("repeat-login@example.com")
+                .firstName("Repeat")
+                .lastName("Login")
+                .phone("0711111111")
+                .password(passwordEncoder.encode("secret1"))
+                .role(UserRole.ADMIN)
+                .build());
+
+        String body = """
+                {"email":"repeat-login@example.com","password":"secret1","rememberMe":true}
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
     }
 
     @Test
@@ -111,12 +145,11 @@ class SecurityIntegrationTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/extra-options").header(HttpHeaders.AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/api/v1/cars").header(HttpHeaders.AUTHORIZATION, bearer(token)))
-                .andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/vehicles").header(HttpHeaders.AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/brands")
+                        .with(csrf())
                         .header(HttpHeaders.AUTHORIZATION, bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -131,6 +164,7 @@ class SecurityIntegrationTest {
         String managerToken = tokenFor(UserRole.USER, EmployeePosition.MANAGER);
 
         mockMvc.perform(post("/api/v1/brands")
+                        .with(csrf())
                         .header(HttpHeaders.AUTHORIZATION, bearer(adminToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -139,7 +173,8 @@ class SecurityIntegrationTest {
                 .andExpect(status().isCreated());
 
         UUID brandId = brandRepository.findAll().get(0).getId();
-        mockMvc.perform(post("/api/v1/cars")
+        mockMvc.perform(post("/api/v1/vehicles")
+                        .with(csrf())
                         .header(HttpHeaders.AUTHORIZATION, bearer(managerToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -152,10 +187,10 @@ class SecurityIntegrationTest {
     void salesConsultantCanCreateContractsAndFinanceSpecialistCanCreatePayments() throws Exception {
         String salesToken = tokenFor(UserRole.USER, EmployeePosition.SALES_CONSULTANT);
         String financeToken = tokenFor(UserRole.USER, EmployeePosition.FINANCE_SPECIALIST);
-        createLegacyCarTables();
         TestSaleData data = createSaleData();
 
         mockMvc.perform(post("/api/v1/sale-contracts")
+                        .with(csrf())
                         .header(HttpHeaders.AUTHORIZATION, bearer(salesToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -164,12 +199,8 @@ class SecurityIntegrationTest {
                 .andExpect(status().isCreated());
 
         UUID contractId = saleRepository.findAll().get(0).getId();
-        UUID legacyCarId = jdbcTemplate.queryForObject("select id from cars where vin = ?", UUID.class, data.vehicleVin());
-        UUID saleCarId = jdbcTemplate.queryForObject("select car_id from sales where id = ?", UUID.class, contractId);
-        assertNotNull(legacyCarId);
-        assertEquals(legacyCarId, saleCarId);
-
         mockMvc.perform(post("/api/v1/payments")
+                        .with(csrf())
                         .header(HttpHeaders.AUTHORIZATION, bearer(financeToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -201,25 +232,6 @@ class SecurityIntegrationTest {
                     .build());
         }
         return jwtService.generateAccessToken(user);
-    }
-
-    private void createLegacyCarTables() {
-        jdbcTemplate.execute("""
-                create table if not exists cars (
-                    id uuid not null primary key,
-                    model varchar(255) not null,
-                    price numeric(12, 2) not null,
-                    vin varchar(17) not null unique,
-                    brand_id uuid
-                )
-                """);
-        jdbcTemplate.execute("""
-                create table if not exists car_extra_options (
-                    car_id uuid not null,
-                    extra_option_id uuid not null,
-                    primary key (car_id, extra_option_id)
-                )
-                """);
     }
 
     private TestSaleData createSaleData() {

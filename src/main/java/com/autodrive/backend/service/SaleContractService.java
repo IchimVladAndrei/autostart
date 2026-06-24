@@ -38,7 +38,6 @@ public class SaleContractService {
     private final EmployeeRepository employeeRepository;
     private final VehicleRepository vehicleRepository;
     private final PaymentRepository paymentRepository;
-    private final LegacySchemaCompatibilityService legacySchemaCompatibilityService;
 
     @Transactional(readOnly = true)
     public PageResponse<SaleContractResponse> findAll(int page, int size, String sortBy, String direction) {
@@ -66,7 +65,6 @@ public class SaleContractService {
         contract.setCustomer(customer);
         contract.setEmployee(employee);
         contract.setVehicle(vehicle);
-        contract.setLegacyCarId(legacySchemaCompatibilityService.ensureLegacyCar(vehicle));
         updateVehicleStatusForCompletedContract(contract);
         return SaleContractMapper.toResponse(saleRepository.save(contract));
     }

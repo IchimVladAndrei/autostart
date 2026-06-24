@@ -36,17 +36,21 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        refreshTokenRepository.deleteByUser(user); // invalidam restul de refresh
-
+        long refreshExpirationMs = request.rememberMe()
+                ? jwtProperties.rememberMeRefreshExpirationMs()
+                : jwtProperties.refreshExpirationMs();
         String refreshString = jwtService.generateRefreshToken();
-        RefreshToken refreshToken = RefreshToken
-                .builder()
-                .user(user)
-                .token(refreshString)
-                .expiryDate(Instant
-                        .now()
-                        .plusMillis(jwtProperties.refreshExpirationMs()))
-                .build();
+        RefreshToken refreshToken = refreshTokenRepository
+                .findByUser(user)
+                .orElseGet(() -> RefreshToken
+                        .builder()
+                        .user(user)
+                        .build());
+        refreshToken.setToken(refreshString);
+        refreshToken.setExpiryDate(Instant
+                .now()
+                .plusMillis(refreshExpirationMs));
+        refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 
         return new LoginResponse(jwtService.generateAccessToken(user), refreshString, "Bearer", jwtProperties.expirationMs());

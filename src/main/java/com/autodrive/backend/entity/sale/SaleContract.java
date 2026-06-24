@@ -37,24 +37,6 @@ public class SaleContract {
     @Column(name = "sale_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
 
-    @Column(name = "final_price", precision = 12, scale = 2)
-    private BigDecimal finalPrice;
-
-    @Column(name = "sale_date")
-    private LocalDateTime legacySaleDate;
-
-    @Column(name = "car_id")
-    private UUID legacyCarId;
-
-    @Column(name = "client_id")
-    private UUID legacyClientId;
-
-    @Column(name = "sales_agent_id")
-    private UUID legacySalesAgentId;
-
-    @Column(name = "vehicle_id", length = 17)
-    private String legacyVehicleId;
-
     @Size(max = 1000, message = "Notes must not exceed 1000 characters")
     @Column(name = "notes", length = 1000)
     private String notes;
@@ -74,14 +56,4 @@ public class SaleContract {
     @OneToOne(optional = false)
     @JoinColumn(name = "vehicle_vin", referencedColumnName = "vin", nullable = false, unique = true)
     private Vehicle vehicle;
-
-    @PrePersist
-    @PreUpdate
-    private void syncLegacyColumns() {
-        finalPrice = salePrice;
-        legacySaleDate = contractDate;
-        legacyClientId = customer != null ? customer.getUserId() : legacyClientId;
-        legacySalesAgentId = employee != null ? employee.getUserId() : legacySalesAgentId;
-        legacyVehicleId = vehicle != null ? vehicle.getVin() : legacyVehicleId;
-    }
 }

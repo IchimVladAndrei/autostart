@@ -23,9 +23,6 @@ public class Employee {
     @Id
     private UUID userId;
 
-    @Column(name = "id")
-    private UUID legacyId;
-
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "user_id", nullable = false)
@@ -58,10 +55,4 @@ public class Employee {
     @NotNull(message = "Hire date is required")
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
-
-    @PrePersist
-    @PreUpdate
-    private void syncLegacyId() {
-        legacyId = userId != null ? userId : user != null ? user.getId() : null;
-    }
 }
