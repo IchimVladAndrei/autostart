@@ -1,15 +1,18 @@
 package com.autodrive.common.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Aspect
 @Component
 public class ApplicationLoggingAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(ApplicationLoggingAspect.class);
 
     @Around("within(com.autodrive..service..*)")
     public Object logServiceCall(ProceedingJoinPoint joinPoint) throws Throwable {
