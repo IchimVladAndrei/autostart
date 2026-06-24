@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  routes:
+    auth-user-url: ${AUTH_USER_SERVICE_URL:http://localhost:8081}
+    vehicle-url: ${VEHICLE_SERVICE_URL:http://localhost:8082}
+    sales-url: ${SALES_SERVICE_URL:http://localhost:8083}
