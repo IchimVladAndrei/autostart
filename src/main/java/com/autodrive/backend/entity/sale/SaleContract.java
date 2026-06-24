@@ -6,6 +6,7 @@ import com.autodrive.backend.entity.user.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -27,12 +28,32 @@ public class SaleContract {
     private UUID id;
 
     @NotNull(message = "Contract date is required")
+    @PastOrPresent(message = "Contract date cannot be in the future")
     @Column(name = "contract_date", nullable = false)
     private LocalDateTime contractDate; //automatic or manual?
 
+    @NotNull(message = "Sale price is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Sale price must be greater or equal than zero ")
     @Column(name = "sale_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
+
+    @Column(name = "final_price", precision = 12, scale = 2)
+    private BigDecimal finalPrice;
+
+    @Column(name = "sale_date")
+    private LocalDateTime legacySaleDate;
+
+    @Column(name = "car_id")
+    private UUID legacyCarId;
+
+    @Column(name = "client_id")
+    private UUID legacyClientId;
+
+    @Column(name = "sales_agent_id")
+    private UUID legacySalesAgentId;
+
+    @Column(name = "vehicle_id", length = 17)
+    private String legacyVehicleId;
 
     @Size(max = 1000, message = "Notes must not exceed 1000 characters")
     @Column(name = "notes", length = 1000)
@@ -53,5 +74,14 @@ public class SaleContract {
     @OneToOne(optional = false)
     @JoinColumn(name = "vehicle_vin", referencedColumnName = "vin", nullable = false, unique = true)
     private Vehicle vehicle;
-}
 
+    @PrePersist
+    @PreUpdate
+    private void syncLegacyColumns() {
+        finalPrice = salePrice;
+        legacySaleDate = contractDate;
+        legacyClientId = customer != null ? customer.getUserId() : legacyClientId;
+        legacySalesAgentId = employee != null ? employee.getUserId() : legacySalesAgentId;
+        legacyVehicleId = vehicle != null ? vehicle.getVin() : legacyVehicleId;
+    }
+}

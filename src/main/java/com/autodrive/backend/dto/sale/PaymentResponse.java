@@ -11,5 +11,6 @@ public record PaymentResponse(BigDecimal amount,
                               PaymentType type,
                               PaymentStatus status,
                               LocalDateTime paymentDate,
-                              UUID id) {
+                              UUID id,
+                              UUID contractId) {
 }

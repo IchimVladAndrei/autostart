@@ -37,7 +37,14 @@ public class Vehicle {
 
     @NotNull(message = "Year is required")
     @Min(value = 1900, message = "Year must be valid")
+    @Column(name = "\"year\"", nullable = false)
     private Integer year;
+
+    @Column(name = "model_year")
+    private Integer modelYear;
+
+    @Column(name = "production_year")
+    private Integer productionYear;
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Status is required")
@@ -64,6 +71,20 @@ public class Vehicle {
     )
     @JsonIgnoreProperties({"vehicles"})
     private Set<ExtraOption> extraOptions = new HashSet<>();
+
+    @PostLoad
+    private void normalizeYear() {
+        if (year == null) {
+            year = productionYear != null ? productionYear : modelYear;
+        }
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void syncLegacyYearColumns() {
+        modelYear = year;
+        productionYear = year;
+    }
 
     @Override
     public boolean equals(Object o) {

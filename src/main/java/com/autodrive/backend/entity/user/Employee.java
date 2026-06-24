@@ -3,6 +3,7 @@ package com.autodrive.backend.entity.user;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
@@ -22,6 +23,9 @@ public class Employee {
     @Id
     private UUID userId;
 
+    @Column(name = "id")
+    private UUID legacyId;
+
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "user_id", nullable = false)
@@ -37,6 +41,7 @@ public class Employee {
     private EmployeePosition position;
 
     @NotBlank(message = "CNP is required")
+    @Pattern(regexp = "^\\d{13}$", message = "CNP must contain exactly 13 digits")
     @Column(unique = true, nullable = false, length = 13)
     private String cnp;
 
@@ -47,9 +52,16 @@ public class Employee {
     @Column(name = "base_salary", nullable = false)
     private BigDecimal baseSalary;
 
+    @PositiveOrZero(message = "Bonus must be a positive value or zero")
     private BigDecimal bonus;
 
     @NotNull(message = "Hire date is required")
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
+
+    @PrePersist
+    @PreUpdate
+    private void syncLegacyId() {
+        legacyId = userId != null ? userId : user != null ? user.getId() : null;
+    }
 }

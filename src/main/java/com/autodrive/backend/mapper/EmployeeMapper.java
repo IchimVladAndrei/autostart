@@ -19,6 +19,7 @@ public final class EmployeeMapper {
                 .position(req.position())
                 .status(req.status())
                 .baseSalary(req.baseSalary())
+                .bonus(req.bonus())
                 .hireDate(req.hireDate())
                 .build();
 
@@ -26,7 +27,7 @@ public final class EmployeeMapper {
 
     public static EmployeeResponse toResponse(Employee e) {
 
-        return new EmployeeResponse(e.getName(), e.getCnp(), e.getPosition(), e.getStatus(), e.getBaseSalary(), e.getHireDate(),e.getUserId());
+        return new EmployeeResponse(e.getName(), e.getCnp(), e.getPosition(), e.getStatus(), e.getBaseSalary(), e.getBonus(), e.getHireDate(), e.getUserId());
     }
 
     public static void applyUpdates(Employee e, EmployeeUpdateRequest req) {
@@ -35,6 +36,7 @@ public final class EmployeeMapper {
         if (req.position() != null) e.setPosition(req.position());
         if (req.status() != null) e.setStatus(req.status());
         if (req.baseSalary() != null) e.setBaseSalary(req.baseSalary());
+        if (req.bonus() != null) e.setBonus(req.bonus());
         if (req.hireDate() != null) e.setHireDate(req.hireDate());
     }
 

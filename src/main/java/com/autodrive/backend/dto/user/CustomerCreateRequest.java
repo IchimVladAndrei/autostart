@@ -6,12 +6,17 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record CustomerCreateRequest(
+        @NotNull(message = "User ID is required")
+        UUID userId,
+
         @NotBlank(message = "Name is required")
         String name,
 
         @NotBlank(message = "CNP is required")
-        @Size(min = 13, max = 13, message = "CNP must be exactly 13 characters")
+        @Pattern(regexp = "^\\d{13}$", message = "CNP must contain exactly 13 digits")
         String cnp,
 
         @NotBlank(message = "Phone is required")
