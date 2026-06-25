@@ -1,6 +1,8 @@
 package com.autodrive.gateway;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +36,15 @@ public class ProxyController {
     );
 
     private final GatewayRoutesProperties routes;
+    private final LoadBalancerClient loadBalancerClient;
     private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(5))
-            .build();
+                                                    .connectTimeout(Duration.ofSeconds(5))
+                                                    .build();
 
-    public ProxyController(GatewayRoutesProperties routes) {
+
+    public ProxyController(GatewayRoutesProperties routes, LoadBalancerClient loadBalancerClient) {
         this.routes = routes;
+        this.loadBalancerClient = loadBalancerClient;
     }
 
     @RequestMapping("/api/v1/**")
@@ -48,10 +53,10 @@ public class ProxyController {
         byte[] body = request.getInputStream().readAllBytes();
 
         HttpRequest.Builder builder = HttpRequest.newBuilder(target)
-                .timeout(Duration.ofSeconds(30))
-                .method(request.getMethod(), body.length == 0
-                        ? HttpRequest.BodyPublishers.noBody()
-                        : HttpRequest.BodyPublishers.ofByteArray(body));
+                                                 .timeout(Duration.ofSeconds(30))
+                                                 .method(request.getMethod(), body.length == 0
+                                                         ? HttpRequest.BodyPublishers.noBody()
+                                                         : HttpRequest.BodyPublishers.ofByteArray(body));
 
         copyRequestHeaders(request, builder);
 
@@ -70,6 +75,22 @@ public class ProxyController {
         String requestUri = request.getRequestURI();
         String baseUrl = routeBaseUrl(requestUri);
         String query = request.getQueryString();
+
+        // e prin eureka
+        if (baseUrl != null && baseUrl.startsWith("lb://")) {
+            URI lbUri = URI.create(baseUrl);
+            String serviceName = lbUri.getHost();
+            ServiceInstance instance = loadBalancerClient.choose(serviceName);
+            if (instance == null) {
+                throw new IllegalStateException("Serviciul " + serviceName + " nu este disponibil in Eureka!");
+            }
+
+
+            String realBaseUrl = String.format("http://%s:%s", instance.getHost(), instance.getPort());
+            return URI.create(realBaseUrl + requestUri + (query == null ? "" : "?" + query));
+        }
+
+        // altfel
         return URI.create(baseUrl + requestUri + (query == null ? "" : "?" + query));
     }
 

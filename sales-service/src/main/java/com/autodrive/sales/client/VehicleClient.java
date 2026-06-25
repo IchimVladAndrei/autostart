@@ -1,5 +1,6 @@
 package com.autodrive.sales.client;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -12,9 +13,9 @@ public class VehicleClient {
     private final RestClient restClient;
     private final String internalToken;
 
-    public VehicleClient(@Value("${app.services.vehicle-url}") String baseUrl,
+    public VehicleClient(@Qualifier("loadBalancedBuilder") RestClient.Builder builder,
                          @Value("${app.internal.token}") String internalToken) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+        this.restClient = builder.baseUrl("http://vehicle-service").build();
         this.internalToken = internalToken;
     }
 
