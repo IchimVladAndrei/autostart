@@ -1,6 +1,8 @@
 package com.autodrive.sales.repo;
 
 import com.autodrive.sales.entity.sale.SaleContract;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
@@ -13,5 +15,7 @@ public interface SaleRepository extends JpaRepository<SaleContract, UUID> {
     boolean existsByCustomerId(UUID customerId);
 
     boolean existsByEmployeeId(UUID employeeId);
+
+    Page<SaleContract> findByCustomerId(UUID customerId, Pageable pageable);
 }
 
