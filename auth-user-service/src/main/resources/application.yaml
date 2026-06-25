@@ -6,6 +6,13 @@ spring:
     name: auth-user-service
   profiles:
     active: dev
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/autostart}
     driverClassName: ${DB_DRIVER:org.postgresql.Driver}

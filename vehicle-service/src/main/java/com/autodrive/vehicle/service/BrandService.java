@@ -12,6 +12,8 @@ import com.autodrive.vehicle.mapper.BrandMapper;
 import com.autodrive.vehicle.repo.BrandRepository;
 import com.autodrive.vehicle.repo.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,16 +31,19 @@ public class BrandService {
     private final VehicleRepository vehicleRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "brands", key = "'list:' + #page + ':' + #size + ':' + #sortBy + ':' + #direction")
     public PageResponse<BrandResponse> findAll(int page, int size, String sortBy, String direction) {
         Pageable pageable = PageRequestFactory.create(page, size, sortBy, direction, SORTS);
         return PageResponse.from(brandRepository.findAll(pageable).map(BrandMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "brands", key = "'id:' + #id")
     public BrandResponse findById(UUID id) {
         return BrandMapper.toResponse(getBrand(id));
     }
 
+    @CacheEvict(cacheNames = {"brands", "vehicle"}, allEntries = true)
     public BrandResponse create(BrandCreateRequest request) {
         if (brandRepository.existsByNameIgnoreCase(request.name())) {
             throw new DuplicateResourceException("Brand already exists with name: " + request.name());
@@ -46,6 +51,7 @@ public class BrandService {
         return BrandMapper.toResponse(brandRepository.save(BrandMapper.toEntity(request)));
     }
 
+    @CacheEvict(cacheNames = {"brands", "vehicle"}, allEntries = true)
     public BrandResponse update(UUID id, BrandUpdateRequest request) {
         Brand brand = getBrand(id);
         if (request.name() != null && brandRepository.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
@@ -55,6 +61,7 @@ public class BrandService {
         return BrandMapper.toResponse(brandRepository.save(brand));
     }
 
+    @CacheEvict(cacheNames = {"brands", "vehicle"}, allEntries = true)
     public void delete(UUID id) {
         if (!brandRepository.existsById(id)) {
             throw new ResourceNotFoundException("Brand not found with id: " + id);

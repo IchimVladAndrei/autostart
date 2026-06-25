@@ -2,6 +2,8 @@ server:
   port: 0
 
 spring:
+  cache:
+    type: simple
   datasource:
     url: jdbc:h2:mem:salesdb;INIT=CREATE SCHEMA IF NOT EXISTS sales
     driverClassName: org.h2.Driver

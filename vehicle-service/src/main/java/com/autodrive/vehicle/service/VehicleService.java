@@ -9,7 +9,6 @@ import com.autodrive.vehicle.entity.vehicle.ExtraOption;
 import com.autodrive.vehicle.entity.vehicle.Vehicle;
 import com.autodrive.common.exception.BadRequestException;
 import com.autodrive.common.exception.BrandNotFoundException;
-import com.autodrive.common.exception.ConflictException;
 import com.autodrive.common.exception.ExtraOptionNotFoundException;
 import com.autodrive.common.exception.VehicleAlreadyExistsException;
 import com.autodrive.common.exception.VehicleNotFoundException;
@@ -18,6 +17,8 @@ import com.autodrive.vehicle.repo.BrandRepository;
 import com.autodrive.vehicle.repo.ExtraOptionRepository;
 import com.autodrive.vehicle.repo.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,18 +39,21 @@ public class VehicleService {
     private static final Set<String> SORTS = Set.of("vin", "model", "basePrice", "year", "status", "color", "mileage");
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "vehicle", key = "'list:' + #page + ':' + #size + ':' + #sortBy + ':' + #direction")
     public PageResponse<VehicleResponse> findAll(int page, int size, String sortBy, String direction) {
         Pageable pageable = PageRequestFactory.create(page, size, sortBy, direction, SORTS);
         return PageResponse.from(vehicleRepository.findAll(pageable).map(VehicleMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "vehicle", key = "'vin:' + #vin")
     public VehicleResponse findById(String vin) {
         Vehicle vehicle = getVehicleOrThrow(vin);
         return VehicleMapper.toResponse(vehicle);
 
     }
 
+    @CacheEvict(cacheNames = "vehicle", allEntries = true)
     public VehicleResponse create(VehicleCreateRequest request) {
 
         if (vehicleRepository.existsById(request.vin())) {
@@ -64,6 +68,7 @@ public class VehicleService {
         return VehicleMapper.toResponse(savedVehicle);
     }
 
+    @CacheEvict(cacheNames = "vehicle", allEntries = true)
     public VehicleResponse update(String vin, VehicleUpdateRequest request) {
 
         Vehicle existingVehicle = getVehicleOrThrow(vin);
@@ -78,6 +83,7 @@ public class VehicleService {
 
     }
 
+    @CacheEvict(cacheNames = "vehicle", allEntries = true)
     public void delete(String vin) {
         if (!vehicleRepository.existsById(vin)) {
             throw new VehicleNotFoundException("Vehicle not found with VIN: " + vin);

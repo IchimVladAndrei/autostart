@@ -6,6 +6,7 @@ import com.autodrive.vehicle.repo.VehicleRepository;
 import com.autodrive.vehicle.service.InternalTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ public class InternalVehicleController {
     }
 
     @PatchMapping("/{vin}/status")
+    @CacheEvict(cacheNames = "vehicle", allEntries = true)
     public void updateStatus(@PathVariable String vin,
                              @Valid @RequestBody VehicleStatusUpdateRequest request,
                              @RequestHeader(name = "X-Internal-Token", required = false) String token) {
