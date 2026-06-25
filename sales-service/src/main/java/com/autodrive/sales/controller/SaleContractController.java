@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +28,16 @@ public class SaleContractController {
                                                      @RequestParam(defaultValue = "contractDate") String sortBy,
                                                      @RequestParam(defaultValue = "desc") String direction) {
         return saleContractService.findAll(page, size, sortBy, direction);
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('USER') and !hasAnyAuthority('POSITION_MANAGER','POSITION_SALES_CONSULTANT','POSITION_SERVICE_ADVISOR','POSITION_MECHANIC','POSITION_FINANCE_SPECIALIST','POSITION_ADMINISTRATOR')")
+    public PageResponse<SaleContractResponse> getMine(@RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "10") int size,
+                                                      @RequestParam(defaultValue = "contractDate") String sortBy,
+                                                      @RequestParam(defaultValue = "desc") String direction,
+                                                      Authentication authentication) {
+        return saleContractService.findForCustomerEmail(authentication.getName(), page, size, sortBy, direction);
     }
 
     @GetMapping("/{id}")

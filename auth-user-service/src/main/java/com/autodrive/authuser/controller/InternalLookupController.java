@@ -4,6 +4,7 @@ import com.autodrive.authuser.repo.CustomerRepository;
 import com.autodrive.authuser.repo.EmployeeRepository;
 import com.autodrive.authuser.service.InternalTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,6 +26,15 @@ public class InternalLookupController {
     public boolean customerExists(@PathVariable UUID id, @RequestHeader(name = "X-Internal-Token", required = false) String token) {
         internalTokenService.validate(token);
         return customerRepository.existsById(id);
+    }
+
+    @GetMapping("/customers/by-email/{email}/id")
+    public ResponseEntity<UUID> customerIdByEmail(@PathVariable String email, @RequestHeader(name = "X-Internal-Token", required = false) String token) {
+        internalTokenService.validate(token);
+        return customerRepository
+                .findByUserEmailIgnoreCase(email)
+                .map(customer -> ResponseEntity.ok(customer.getUserId()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/employees/{id}/exists")

@@ -15,6 +15,7 @@ import com.autodrive.sales.mapper.SaleContractMapper;
 import com.autodrive.sales.repo.PaymentRepository;
 import com.autodrive.sales.repo.SaleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,15 @@ public class SaleContractService {
     public PageResponse<SaleContractResponse> findAll(int page, int size, String sortBy, String direction) {
         Pageable pageable = PageRequestFactory.create(page, size, sortBy, direction, SORTS);
         return PageResponse.from(saleRepository.findAll(pageable).map(SaleContractMapper::toResponse));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SaleContractResponse> findForCustomerEmail(String email, int page, int size, String sortBy, String direction) {
+        Pageable pageable = PageRequestFactory.create(page, size, sortBy, direction, SORTS);
+        return authUserClient
+                .findCustomerIdByEmail(email)
+                .map(customerId -> PageResponse.from(saleRepository.findByCustomerId(customerId, pageable).map(SaleContractMapper::toResponse)))
+                .orElseGet(() -> PageResponse.from(Page.empty(pageable)));
     }
 
     @Transactional(readOnly = true)

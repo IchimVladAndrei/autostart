@@ -5,7 +5,9 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -30,6 +32,30 @@ public class AuthUserClient {
     public boolean existsEmployee(UUID employeeId) {
         Boolean exists = getBooleanWithFailover("/api/internal/employees/{id}/exists", employeeId);
         return Boolean.TRUE.equals(exists);
+    }
+
+    public Optional<UUID> findCustomerIdByEmail(String email) {
+        try {
+            return getCustomerId(email);
+        } catch (WebClientRequestException firstFailure) {
+            return getCustomerId(email);
+        } catch (WebClientResponseException.NotFound ex) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<UUID> getCustomerId(String email) {
+        try {
+            UUID customerId = webClient.get()
+                    .uri("/api/internal/customers/by-email/{email}/id", email)
+                    .header("X-Internal-Token", internalToken)
+                    .retrieve()
+                    .bodyToMono(UUID.class)
+                    .block();
+            return Optional.ofNullable(customerId);
+        } catch (WebClientResponseException.NotFound ex) {
+            return Optional.empty();
+        }
     }
 
     private Boolean getBooleanWithFailover(String uri, Object value) {
