@@ -27,9 +27,6 @@ spring:
 app:
   internal:
     token: ${INTERNAL_SERVICE_TOKEN}
-  services:
-    auth-user-url: ${AUTH_USER_SERVICE_URL:http://localhost:8081}
-    vehicle-url: ${VEHICLE_SERVICE_URL:http://localhost:8082}
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
@@ -43,3 +40,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true

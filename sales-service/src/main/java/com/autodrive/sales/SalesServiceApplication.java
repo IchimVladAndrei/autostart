@@ -4,12 +4,14 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 @SpringBootApplication(scanBasePackages = {"com.autodrive.sales", "com.autodrive.common"})
 @ConfigurationPropertiesScan(basePackages = {"com.autodrive.common"})
+@EnableFeignClients
 public class SalesServiceApplication {
 
     public static void main(String[] args) {
