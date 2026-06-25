@@ -1,265 +1,577 @@
+# AutoStart - Aplicație Web pentru Managementul unui Dealership Auto
 
-# AutoStart - Sistem Integrat de Gestiune Parc Auto
+AutoStart este o aplicație web full-stack pentru digitalizarea operațiunilor dintr-un dealership auto. Platforma acoperă fluxul principal de business: autentificare și administrare utilizatori, management clienți și angajați, inventar vehicule, branduri, opțiuni extra, contracte de vânzare și plăți.
 
+Aplicația a fost migrată dintr-o structură monolitică într-o arhitectură bazată pe microservicii Spring Boot, cu API Gateway, Service Discovery, Config Server, Redis caching și monitorizare prin Prometheus/Grafana.
 
-AutoStart este o platformă destinată digitalizării operațiunilor dintr-un dealership auto. Aplicația gestionează fluxul complet: de la recepția vehiculelor în inventar și configurarea dotărilor opționale, până la managementul clienților și finalizarea contractelor de vânzare.
+## Funcționalități principale
 
-### Funcționalități principale
-
-- Gestiunea stocului de mașini și a brandurilor
-- Configurarea de dotări opționale pentru fiecare vehicul
-- Managementul vânzărilor și al bazei de date de clienți
-- Căutare și filtrare avansată pentru catalogul auto
-- Monitorizarea performanței sistemului prin metrici centralizate
-
-<img width="989" height="819" alt="c787f7f4-bd83-40bd-80f8-f5c68544c44d" src="https://github.com/user-attachments/assets/eb9c7e3c-ee69-4804-8b68-8dbae9d6f8bf" />
-
+- Autentificare cu JWT, refresh token, logout și protecție CSRF.
+- Roluri și permisiuni: `ADMIN`, `USER` și autorități bazate pe poziții de angajat.
+- CRUD complet pentru utilizatori, clienți, angajați, vehicule, branduri, opțiuni extra, contracte și plăți.
+- Paginare și sortare pentru resursele principale.
+- Interfață React cu formulare validate client-side și mesaje de eroare prietenoase.
+- Validare server-side cu Bean Validation.
+- Client users văd doar propriile contracte.
+- Cache Redis pentru catalogul de vehicule, branduri și opțiuni.
+- Monitorizare cu Spring Boot Actuator, Prometheus și Grafana.
+- Configurații externalizate prin Spring Cloud Config Server.
+- Service Discovery prin Eureka și load balancing prin Spring Cloud LoadBalancer.
 
 ## Tech Stack
+
 ### Backend
 
-- Spring Boot (microservicii), Spring Cloud (Eureka, Gateway, Config)
+- Java 21
+- Spring Boot 4
+- Spring Cloud
+- Spring Security
+- Spring Data JPA
+- Hibernate
+- Maven multi-module
+- PostgreSQL
+- H2 pentru teste
+- Redis
+- Eureka Server
+- Spring Cloud Config Server
+- Spring Cloud LoadBalancer
+- Spring Boot Actuator
+- Micrometer Prometheus
+- SLF4J + Logback
 
 ### Frontend
 
 - React
-### Baze de date
+- JavaScript
+- CSS custom
+- Fetch API
+
+### Infrastructură
+
+- Docker / Docker Compose
+- Redis containerizat
+- Prometheus
+- Grafana
+- pgAdmin 4 pentru administrarea bazei de date
+
+## Arhitectură
+
+Backend-ul este organizat ca proiect Maven multi-module:
+
+```text
+autostart
+├── autostart-common
+├── auth-user-service
+├── vehicle-service
+├── sales-service
+├── api-gateway
+├── discovery-server
+└── config-server
+```
+
+### Microservicii
+
+| Modul | Port implicit | Responsabilitate |
+| --- | ---: | --- |
+| `config-server` | `8888` | Configurații centralizate pentru microservicii |
+| `discovery-server` | `8761` | Eureka Service Registry |
+| `api-gateway` | `8080` | Punct unic de intrare pentru frontend |
+| `auth-user-service` | `8081` | Autentificare, utilizatori, clienți, angajați, refresh tokens |
+| `vehicle-service` | `8082` | Vehicule, branduri, opțiuni extra, cache catalog |
+| `sales-service` | `8083` | Contracte de vânzare și plăți |
+| `autostart-common` | - | DTO-uri comune, excepții, JWT, logging, cache, filtre comune |
+
+Frontend-ul comunică doar cu API Gateway:
+
+```text
+React Frontend
+      |
+      v
+API Gateway :8080
+      |
+      +--> auth-user-service :8081
+      +--> vehicle-service   :8082
+      +--> sales-service     :8083
+```
+
+### Comunicare între servicii
+
+- Gateway-ul rutează cererile publice pe baza path-ului.
+- `sales-service` comunică intern cu:
+  - `auth-user-service` pentru validarea clienților și angajaților.
+  - `vehicle-service` pentru validarea vehiculelor și actualizarea statusului la `SOLD`.
+- Endpoint-urile interne sunt protejate cu header-ul `X-Internal-Token`.
+- Serviciile folosesc nume logice, de exemplu `http://vehicle-service`, prin Eureka + Spring Cloud LoadBalancer.
+
+### Baza de date
+
+Pentru simplitate, aplicația folosește o singură bază PostgreSQL, dar cu scheme separate pe domenii:
+
+| Schema | Tabele |
+| --- | --- |
+| `auth_user` | `users`, `refresh_tokens`, `customers`, `employees` |
+| `vehicle` | `brands`, `vehicles`, `extra_options`, `vehicle_extra_option` |
+| `sales` | `sales`, `payments` |
+
+Toate entitățile au mapping explicit cu `@Table(schema = "...")`, astfel încât aplicația nu depinde de schema `public`.
+
+## Model de date
+
+Entitățile principale sunt:
+
+- `User`
+- `RefreshToken`
+- `Customer`
+- `Employee`
+- `Brand`
+- `Vehicle`
+- `ExtraOption`
+- `SaleContract`
+- `Payment`
+
+Relații implementate:
+
+- `@OneToOne`
+  - `User` - `Customer`
+  - `User` - `Employee`
+  - `User` - `RefreshToken`
+- `@OneToMany` / `@ManyToOne`
+  - `Brand` - `Vehicle`
+  - `SaleContract` - `Payment`
+- `@ManyToMany`
+  - `Vehicle` - `ExtraOption`, prin tabela `vehicle.vehicle_extra_option`
+
+### Diagramă ER simplificată
+
+```mermaid
+erDiagram
+    USERS ||--o| CUSTOMERS : "profil client"
+    USERS ||--o| EMPLOYEES : "profil angajat"
+    USERS ||--o| REFRESH_TOKENS : "token activ"
 
-- PostgreSQL, H2
+    BRANDS ||--o{ VEHICLES : "produce"
+    VEHICLES }o--o{ EXTRA_OPTIONS : "are dotari"
 
-### Infrastructure
+    CUSTOMERS ||--o{ SALES : "cumpara"
+    EMPLOYEES ||--o{ SALES : "proceseaza"
+    VEHICLES ||--o| SALES : "vandut prin"
+    SALES ||--o{ PAYMENTS : "incaseaza"
+```
 
-- Docker, Redis
+Notă: în `sales-service`, contractele păstrează referințe primitive (`customerId`, `employeeId`, `vehicleVin`) pentru a evita relații JPA cross-service. Validarea referințelor se face prin apeluri HTTP interne.
 
-# Product Backlog
-## 1. Autentificare și Management Utilizatori
-### User Story 1.1 - Înregistrare utilizator
+## Setup instructions
 
-**Ca** utilizator nou\
-**Vreau** să pot crea un cont în aplicație\
-**Pentru a** putea accesa funcționalitățile sistemului
+### Cerințe locale
 
-**Criterii de acceptare:**
+- Java 21
+- Maven Wrapper inclus în proiect
+- Node.js + npm
+- Docker Desktop
+- PostgreSQL
+- pgAdmin 4
+- Git Bash sau PowerShell
 
-- Formular cu validare pentru email și parolă
-- Email unic în sistem
-- Date salvate în baza de date
-- Mesaj de confirmare la finalizare
+### Structura proiectului local
 
----
+```text
+autostart-project
+├── autostart       # backend microservicii
+├── frontend        # aplicația React
+└── config-repo     # configurații externalizate pentru Config Server
+```
 
-### User Story 1.2 - Autentificare / Logout
+### Configurare PostgreSQL
 
-**Ca** utilizator existent\
-**Vreau** să mă autentific în aplicație\
-**Pentru a** accesa resursele corespunzătoare rolului meu
+1. Creați baza de date:
 
-**Criterii de acceptare:**
+```sql
+CREATE DATABASE autostart;
+```
 
-- Login pe bază de email și parolă
-- Generare token JWT
-- JWT short-lived + refresh token
-- Protejarea endpoint-urilor
+2. Creați schemele:
 
----
+```sql
+CREATE SCHEMA IF NOT EXISTS auth_user;
+CREATE SCHEMA IF NOT EXISTS vehicle;
+CREATE SCHEMA IF NOT EXISTS sales;
+```
 
-### User Story 1.3 - Management profil utilizator
+3. Verificați tabelele după pornirea serviciilor:
 
-**Ca** utilizator autentificat\
-**Vreau** să îmi pot modifica datele personale
+```sql
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema IN ('auth_user', 'vehicle', 'sales')
+ORDER BY table_schema, table_name;
+```
 
-**Criterii de acceptare:**
+### Variabile de mediu
 
-- Editare date personale
-- Validare date introduse
-- Persistență în baza de date
+Configurațiile sensibile trebuie furnizate prin environment variables sau prin fișier local `.env`, nu hardcodate în repository.
 
----
+Variabile importante:
 
-### User Story 1.4 - Management utilizatori (Admin)
+```env
+DB_URL=jdbc:postgresql://localhost:5432/autostart
+DB_USER=postgres
+DB_PASSWORD=parola_ta
+JWT_SECRET=cheie_jwt_lunga_si_sigura_minim_32_caractere
+INTERNAL_SERVICE_TOKEN=token_intern_lung_si_sigur
+REDIS_HOST=localhost
+REDIS_PORT=6379
+EUREKA_DEFAULT_ZONE=http://localhost:8761/eureka/
+CONFIG_REPO_LOCATION=file:///E:/CODING/laburi java master/autostart-project/config-repo
+```
 
-**Ca** administrator\
-**Vreau** să pot gestiona utilizatorii
+### Pornire infrastructură Docker
 
-**Criterii de acceptare:**
+Din folderul `autostart`:
 
-- Listă utilizatori
-- Editare roluri
-- Ștergere utilizatori
+```bash
+docker compose up -d redis
+docker compose -f docker-compose.monitoring.yml up -d
+```
 
+Servicii Docker:
 
+- Redis: `localhost:6379`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001`
 
-## 2. Management Vehicule
+Credentiale Grafana implicite:
 
-### User Story 2.1 - Administrare vehicule
+```text
+user: admin
+password: admin
+```
 
-**Ca** administrator\
-**Vreau** să pot adăuga, modifica și șterge vehicule
+### Pornire backend
 
-**Criterii de acceptare:**
+Din folderul `autostart`, porniți serviciile în această ordine:
 
-- CRUD complet pentru vehicule
-- Validare date (preț, VIN - 17 caractere)
-- Salvare în baza de date
+```bash
+./mvnw.cmd -pl config-server spring-boot:run
+./mvnw.cmd -pl discovery-server spring-boot:run
+./mvnw.cmd -pl auth-user-service spring-boot:run
+./mvnw.cmd -pl vehicle-service spring-boot:run
+./mvnw.cmd -pl sales-service spring-boot:run
+./mvnw.cmd -pl api-gateway spring-boot:run
+```
 
----
+Verificări utile:
 
-### User Story 2.2 - Vizualizare inventar
+- Config Server: `http://localhost:8888`
+- Eureka: `http://localhost:8761`
+- Gateway health: `http://localhost:8080/actuator/health`
+- Auth health: `http://localhost:8081/actuator/health`
+- Vehicle health: `http://localhost:8082/actuator/health`
+- Sales health: `http://localhost:8083/actuator/health`
+- Prometheus target status: `http://localhost:9090/targets`
 
-**Ca** utilizator\
-**Vreau** să pot vizualiza lista vehiculelor
+### Pornire frontend
 
-**Criterii de acceptare:**
+Din folderul `frontend`:
 
-- Listă vehicule
-- Filtrare (brand, preț)
-- Căutare
-- Paginare și sortare
+```bash
+npm install
+npm.cmd start
+```
 
----
+Frontend-ul rulează la:
 
-### User Story 2.3 - Configurare opțiuni vehicul
+```text
+http://localhost:3000
+```
+
+API base URL implicit:
+
+```text
+http://localhost:8080/api/v1
+```
+
+### Rulare teste
+
+Backend:
+
+```bash
+cd autostart
+./mvnw.cmd test
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm.cmd test -- --watchAll=false
+npm.cmd run build
+```
+
+## Configurare multi-environment
+
+Aplicația are profiluri separate:
 
-**Ca** administrator\
-**Vreau** să pot configura opțiunile unui vehicul
+- `dev`: PostgreSQL, Redis, Config Server, Eureka.
+- `test`: H2 in-memory și cache simplu în memorie, fără dependență de Redis/Docker.
 
-**Criterii de acceptare:**
+Fișiere relevante:
+
+- `application.yaml`
+- `application-dev.yaml`
+- `application-test.yaml`
+- `config-repo/*.yml`
+
+## API documentation
 
-- CRUD opțiuni
-- Asociere Brand - opțiuni
-- Persistență relații
+Toate endpoint-urile publice sunt accesate prin API Gateway:
+
+```text
+http://localhost:8080/api/v1
+```
+
+### Auth
+
+| Metodă | Endpoint | Descriere |
+| --- | --- | --- |
+| `GET` | `/auth/csrf` | Returnează token CSRF |
+| `POST` | `/auth/login` | Autentificare utilizator |
+| `POST` | `/auth/register` | Înregistrare utilizator |
+| `POST` | `/auth/refresh` | Reînnoire access token |
+| `POST` | `/auth/logout` | Logout și invalidare refresh token |
 
+### Utilizatori, clienți, angajați
+
+| Metodă | Endpoint | Descriere |
+| --- | --- | --- |
+| `GET` | `/users` | Listare paginată utilizatori |
+| `GET` | `/users/{id}` | Detalii utilizator |
+| `POST` | `/users` | Creare utilizator |
+| `PUT` | `/users/{id}` | Actualizare utilizator |
+| `DELETE` | `/users/{id}` | Ștergere utilizator |
+| `GET` | `/customers` | Listare clienți |
+| `POST` | `/customers` | Creare profil client |
+| `PUT` | `/customers/{id}` | Actualizare client |
+| `DELETE` | `/customers/{id}` | Ștergere client |
+| `GET` | `/employees` | Listare angajați |
+| `POST` | `/employees` | Creare profil angajat |
+| `PUT` | `/employees/{id}` | Actualizare angajat |
+| `DELETE` | `/employees/{id}` | Ștergere angajat |
 
+### Vehicule, branduri, opțiuni
 
-## 3. Management Clienți
+| Metodă | Endpoint | Descriere |
+| --- | --- | --- |
+| `GET` | `/vehicles` | Listare paginată vehicule |
+| `GET` | `/vehicles/{vin}` | Detalii vehicul |
+| `POST` | `/vehicles` | Creare vehicul |
+| `PUT` | `/vehicles/{vin}` | Actualizare vehicul |
+| `DELETE` | `/vehicles/{vin}` | Ștergere vehicul |
+| `GET` | `/brands` | Listare branduri |
+| `POST` | `/brands` | Creare brand |
+| `PUT` | `/brands/{id}` | Actualizare brand |
+| `DELETE` | `/brands/{id}` | Ștergere brand |
+| `GET` | `/extra-options` | Listare opțiuni extra |
+| `POST` | `/extra-options` | Creare opțiune extra |
+| `PUT` | `/extra-options/{id}` | Actualizare opțiune extra |
+| `DELETE` | `/extra-options/{id}` | Ștergere opțiune extra |
 
-### User Story 3.1 - Administrare clienți
+### Contracte și plăți
 
-**Ca** administrator\
-**Vreau** să pot gestiona clienții
+| Metodă | Endpoint | Descriere |
+| --- | --- | --- |
+| `GET` | `/sale-contracts` | Listare contracte pentru admin/angajați autorizați |
+| `GET` | `/sale-contracts/my` | Contractele clientului autentificat |
+| `GET` | `/sale-contracts/{id}` | Detalii contract |
+| `POST` | `/sale-contracts` | Creare contract |
+| `PUT` | `/sale-contracts/{id}` | Actualizare contract |
+| `DELETE` | `/sale-contracts/{id}` | Ștergere contract |
+| `GET` | `/payments` | Listare plăți |
+| `POST` | `/payments` | Creare plată |
+| `PUT` | `/payments/{id}` | Actualizare plată |
+| `DELETE` | `/payments/{id}` | Ștergere plată |
 
-**Criterii de acceptare:**
+### Paginare și sortare
 
-- CRUD clienți
-- Asociere cu utilizator
-- Validare date
+Endpoint-urile de listare acceptă parametri:
 
+```text
+page=0
+size=10
+sortBy=name
+direction=asc
+```
 
-## 4. Contracte și Vânzări
+Exemplu:
 
-### User Story 4.1 - Creare contract
+```text
+GET /api/v1/vehicles?page=0&size=10&sortBy=vin&direction=asc
+```
 
-**Ca** agent de vânzări\
-**Vreau** să creez un contract de vânzare
+### Endpoint-uri interne
 
-**Criterii de acceptare:**
+Endpoint-urile interne nu sunt apelate direct din frontend. Ele necesită `X-Internal-Token`.
 
-- Selectare client și vehicul
-- Calcul automat preț
-- Salvare contract
+| Serviciu | Endpoint | Scop |
+| --- | --- | --- |
+| `auth-user-service` | `/api/internal/customers/{id}/exists` | Verifică existența unui client |
+| `auth-user-service` | `/api/internal/employees/{id}/exists` | Verifică existența unui angajat |
+| `auth-user-service` | `/api/internal/customers/by-email/{email}/id` | Găsește customer id pentru user-ul autentificat |
+| `vehicle-service` | `/api/internal/vehicles/{vin}/exists` | Verifică existența unui vehicul |
+| `vehicle-service` | `/api/internal/vehicles/{vin}/status` | Actualizează statusul vehiculului |
 
----
+## Securitate
 
-### User Story 4.2 - Finalizare vânzare
+- Autentificare prin JWT.
+- Refresh tokens persistate în baza de date.
+- Remember-me prin durată extinsă pentru refresh token.
+- Parole hash-uite cu BCrypt.
+- CSRF activ cu `CookieCsrfTokenRepository`.
+- CORS configurat pentru frontend.
+- Endpoint-uri protejate cu `@PreAuthorize`.
+- Serviciile downstream validează JWT fără a interoga baza auth-user pentru fiecare request.
+- Comunicarea internă între servicii este protejată cu `X-Internal-Token`.
 
-**Ca** agent de vânzări\
-**Vreau** să finalizez o vânzare
+## Redis și caching
 
-**Criterii de acceptare:**
+Redis este folosit ca bază NoSQL/cache distribuit.
 
-- Actualizare status vehicul (SOLD)
-- Actualizare status client
-- Asociere contract finalizat
+Configurare:
 
----
+- Container Docker `redis:7-alpine`.
+- Port `6379`.
+- Politică memorie: `allkeys-lru`.
+- TTL cache: 10 minute.
+- Chei serializate cu `StringRedisSerializer`.
+- Valori serializate JSON.
 
-### User Story 4.3 - Gestionare plăți
+Cache-uri principale:
 
-**Ca** agent de vânzări\
-**Vreau** să înregistrez plata aferentă unui contract
+| Cache | Conținut |
+| --- | --- |
+| `vehicle::...` | Liste și detalii vehicule |
+| `brands::...` | Liste și detalii branduri |
+| `options::...` | Liste și detalii opțiuni extra |
 
-**Criterii de acceptare:**
+Invalidarea cache-ului se face automat prin `@CacheEvict` pe operații `POST`, `PUT`, `DELETE`.
 
-- Asociere payment–contract
-- Validare sumă
-- Persistență în baza de date
+Comenzi demo:
 
+```bash
+docker exec -it autostart-redis redis-cli FLUSHALL
+docker exec -it autostart-redis redis-cli KEYS "*"
+docker exec -it autostart-redis redis-cli INFO stats
+```
 
-## 5. Redis și Caching
+## Monitorizare și metrici
 
-### User Story 5.1 - Cache pentru vehicule
+Fiecare microserviciu expune endpoint-uri Actuator:
 
-**Scop:** Reducerea timpului de răspuns
+```text
+/actuator/health
+/actuator/prometheus
+```
 
-**Criterii de acceptare:**
+Prometheus scrape-uiește serviciile backend, iar Grafana folosește Prometheus ca datasource.
 
-- Cache pentru endpoint-uri
-- Invalidare cache la modificări
-- Performanță îmbunătățită
+Fișiere relevante:
 
----
+- `docker-compose.monitoring.yml`
+- `monitoring/prometheus/prometheus.yml`
+- `monitoring/grafana/provisioning/datasources/prometheus.yml`
 
-### User Story 5.2 - Cache pentru opțiuni
+## Logging și tratarea erorilor
 
-**Criterii de acceptare:**
+- Logging prin SLF4J + Logback.
+- Configurație separată `logback-spring.xml` în servicii.
+- Logging pentru request-uri prin `RequestLoggingFilter`.
+- Logging pentru metode prin aspect comun.
+- Erorile sunt normalizate prin `GlobalExceptionHandler`.
+- Răspunsurile de eroare includ status, mesaj, path și erori de validare.
 
-- Cache pentru date statice
-- Sincronizare cu baza de date
+## Screenshots
 
+### Interfață AutoStart
 
+<img width="989" height="819" alt="AutoStart dashboard" src="https://github.com/user-attachments/assets/eb9c7e3c-ee69-4804-8b68-8dbae9d6f8bf" />
 
-## 6. Arhitectură Microservicii și Infrastructură
+### Ecrane recomandate pentru prezentare
 
-### 6.1 Service Discovery (Eureka)
+Pentru predare/prezentare, pot fi adăugate capturi suplimentare în această secțiune:
 
-- Service registry funcțional
-- Înregistrare automată servicii
+- Login custom.
+- Dashboard admin/manager.
+- Inventar vehicule cu paginare și sortare.
+- Formular adăugare client/angajat cu autofill.
+- Contractele vizibile pentru un utilizator client.
+- Eureka Dashboard cu serviciile înregistrate.
+- Prometheus Targets.
+- Grafana Dashboard.
+- Redis keys pentru `vehicle::`, `brands::`, `options::`.
 
+## Demo rapid
 
+1. Porniți Redis, Prometheus și Grafana.
+2. Porniți Config Server și Eureka.
+3. Porniți cele trei microservicii și API Gateway.
+4. Deschideți frontend-ul.
+5. Autentificați-vă ca admin/manager.
+6. Demonstrați CRUD, paginare, sortare, validare și roluri.
+7. Autentificați-vă ca user client și arătați că vede doar contractele proprii.
+8. Deschideți Eureka pentru service discovery.
+9. Arătați Redis keys după accesarea catalogului.
+10. Arătați Prometheus/Grafana pentru monitorizare.
 
-### 6.2 API Gateway
+## Testare
 
-- Routing centralizat
-- Filtrare request/response
+Backend:
 
+```bash
+./mvnw.cmd test
+```
 
+Frontend:
 
-### 6.3 Config Server
+```bash
+npm.cmd test -- --watchAll=false
+npm.cmd run build
+```
 
-- Configurații externalizate
-- Refresh dinamic
+Testele folosesc profilul `test`, H2 in-memory și cache local, astfel încât nu depind de PostgreSQL sau Redis.
 
+## Repository și branch strategy
 
+Proiectul este împărțit în două repository-uri:
 
-### 6.4 Load Balancing
+- Backend: `autostart`
+- Frontend: `frontend`
 
-- Minimum 2 instanțe per serviciu
-- Distribuire echilibrată a cererilor
+Strategie recomandată:
 
+- `main`: versiune stabilă.
+- `dev` / branch de etapă: integrare funcționalități.
+- branch-uri de feature pentru task-uri mari: microservicii, Redis, monitoring, frontend polish.
 
+## Contribuții membrii echipei
 
-### 6.5 Monitorizare și Metrici
+### Bărboi Sabin
 
-- Spring Boot Actuator
-- Prometheus + Grafana
-- Health checks
+- Implementare și integrare frontend React.
+- Pagini de management pentru resurse, formulare, validare client-side.
+- Integrare API Gateway cu frontend-ul.
+- Flux client-only pentru vizualizarea contractelor proprii.
+- Ajustări UI pentru prezentare, afișare EUR și experiență pe roluri.
+- Testare manuală a fluxurilor end-to-end.
 
+### Ichim Vlad
 
-
-### 6.6 Securitate (JWT)
-
-- Generare și validare JWT
-- Endpoint-uri securizate
-
-
-
-### 6.7 Redis (Caching )
-
-- Cache pentru endpoint-uri cheie
-- Invalidare corectă a cache-ului
+- Implementare backend Spring Boot și migrare la microservicii.
+- Model de date, entități JPA, repository-uri și service layer.
+- Configurare Spring Security, JWT, CSRF și roluri.
+- Integrare PostgreSQL cu scheme separate.
+- Configurare Eureka, Config Server, LoadBalancer și API Gateway.
+- Integrare Redis caching, Actuator, Prometheus și Grafana.
 
 ## Autori
 
-Bărboi Sabin
-
-Ichim Vlad
+- Bărboi Sabin
+- Ichim Vlad
