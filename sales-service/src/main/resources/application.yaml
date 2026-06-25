@@ -13,6 +13,17 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            auth-user-service:
+              - uri: http://localhost:8081
+              - uri: http://localhost:8181
+            vehicle-service:
+              - uri: http://localhost:8082
+              - uri: http://localhost:8182
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/autostart}
     driverClassName: ${DB_DRIVER:org.postgresql.Driver}
@@ -28,8 +39,8 @@ app:
   internal:
     token: ${INTERNAL_SERVICE_TOKEN}
   services:
-    auth-user-url: ${AUTH_USER_SERVICE_URL:http://localhost:8081}
-    vehicle-url: ${VEHICLE_SERVICE_URL:http://localhost:8082}
+    auth-user-url: ${AUTH_USER_INTERNAL_URL:http://auth-user-service}
+    vehicle-url: ${VEHICLE_INTERNAL_URL:http://vehicle-service}
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}

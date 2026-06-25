@@ -4,14 +4,28 @@ server:
 spring:
   application:
     name:  api-gateway
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            auth-user-service:
+              - uri: http://localhost:8081
+              - uri: http://localhost:8181
+            vehicle-service:
+              - uri: http://localhost:8082
+              - uri: http://localhost:8182
+            sales-service:
+              - uri: http://localhost:8083
+              - uri: http://localhost:8183
 
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   routes:
-    auth-user-url: ${AUTH_USER_SERVICE_URL:http://localhost:8081}
-    vehicle-url: ${VEHICLE_SERVICE_URL:http://localhost:8082}
-    sales-url: ${SALES_SERVICE_URL:http://localhost:8083}
+    auth-user-url: ${AUTH_USER_ROUTE_URL:http://auth-user-service}
+    vehicle-url: ${VEHICLE_ROUTE_URL:http://vehicle-service}
+    sales-url: ${SALES_ROUTE_URL:http://sales-service}
 management:
   endpoints:
     web:
