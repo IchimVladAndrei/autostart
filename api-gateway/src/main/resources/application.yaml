@@ -1,9 +1,8 @@
-server:
-  port: 8080
-
 spring:
   application:
-    name:  api-gateway
+    name: api-gateway
+  profiles:
+    active: dev
 
 app:
   cors:
@@ -12,14 +11,6 @@ app:
     auth-user-url: ${AUTH_USER_ROUTE_URL:http://auth-user-service}
     vehicle-url: ${VEHICLE_ROUTE_URL:http://vehicle-service}
     sales-url: ${SALES_ROUTE_URL:http://sales-service}
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,prometheus
-  endpoint:
-    health:
-      show-details: always
 
 eureka:
   client:

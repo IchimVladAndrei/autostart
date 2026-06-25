@@ -1,10 +1,12 @@
 package com.autodrive.vehicle.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RefreshScope
 public class InternalTokenService {
 
     private final String internalToken;

@@ -1,56 +1,5 @@
-server:
-  port: 8081
-
 spring:
   application:
     name: auth-user-service
   profiles:
     active: dev
-  cache:
-    type: redis
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/autostart}
-    driverClassName: ${DB_DRIVER:org.postgresql.Driver}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD}
-  jpa:
-    database-platform: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-
-logging:
-  level:
-    com.autodrive.authuser: INFO
-    com.autodrive.common: INFO
-    org.springframework.security: INFO
-
-app:
-  internal:
-    token: ${INTERNAL_SERVICE_TOKEN}
-  jwt:
-    secret: ${JWT_SECRET}
-    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
-    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
-    remember-me-refresh-expiration-ms: ${JWT_REMEMBER_ME_REFRESH_EXPIRATION_MS:2592000000}
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,prometheus
-  endpoint:
-    health:
-      show-details: always
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
-  instance:
-    instance-id: ${app.instance-id:${spring.application.name}:${random.uuid}}
-    prefer-ip-address: true

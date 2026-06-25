@@ -1,6 +1,5 @@
 package com.autodrive.authuser;
 
-import com.autodrive.common.config.DotenvLoader;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -10,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 public class AuthUserServiceApplication {
 
     public static void main(String[] args) {
-        DotenvLoader.load("auth-user-service");
         SpringApplication.run(AuthUserServiceApplication.class, args);
     }
 }

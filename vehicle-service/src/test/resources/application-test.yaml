@@ -2,6 +2,9 @@ server:
   port: 0
 
 spring:
+  cloud:
+    config:
+      enabled: false
   cache:
     type: simple
   datasource:
