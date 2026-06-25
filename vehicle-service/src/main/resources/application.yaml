@@ -40,3 +40,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    instance-id: ${app.instance-id:${spring.application.name}:${random.uuid}}
+    prefer-ip-address: true
