@@ -2,6 +2,7 @@ package com.autodrive.sales.config;
 
 import com.autodrive.common.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
+@RefreshScope
 public class SecurityConfig {
 
     @Bean
