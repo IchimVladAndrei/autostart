@@ -24,7 +24,7 @@ public class GatewayCorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-XSRF-TOKEN")
-                .exposedHeaders("Authorization")
+                .exposedHeaders("Authorization", "X-AutoStart-Instance")
                 .allowCredentials(true)
                 .maxAge(3600);
     }

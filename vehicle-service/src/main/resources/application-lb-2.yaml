@@ -1,0 +1,5 @@
+server:
+  port: 8182
+
+app:
+  instance-id: vehicle-service:8182

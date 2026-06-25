@@ -26,3 +26,7 @@ app:
     expiration-ms: 3600000
     refresh-expiration-ms: 604800000
     remember-me-refresh-expiration-ms: 2592000000
+
+eureka:
+  client:
+    enabled: false

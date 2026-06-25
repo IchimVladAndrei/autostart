@@ -1,21 +1,18 @@
 package com.autodrive.gateway;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -36,62 +33,55 @@ public class ProxyController {
     );
 
     private final GatewayRoutesProperties routes;
-    private final LoadBalancerClient loadBalancerClient;
-    private final HttpClient httpClient = HttpClient.newBuilder()
-                                                    .connectTimeout(Duration.ofSeconds(5))
-                                                    .build();
+    private final WebClient webClient;
 
-
-    public ProxyController(GatewayRoutesProperties routes, LoadBalancerClient loadBalancerClient) {
+    public ProxyController(GatewayRoutesProperties routes, WebClient.Builder loadBalancedWebClientBuilder) {
         this.routes = routes;
-        this.loadBalancerClient = loadBalancerClient;
+        this.webClient = loadBalancedWebClientBuilder.build();
     }
 
     @RequestMapping("/api/v1/**")
-    public ResponseEntity<byte[]> proxy(HttpServletRequest request) throws IOException, InterruptedException {
-        URI target = targetUri(request);
+    public ResponseEntity<byte[]> proxy(HttpServletRequest request) throws IOException {
         byte[] body = request.getInputStream().readAllBytes();
+        try {
+            return forward(request, body);
+        } catch (WebClientRequestException firstFailure) {
+            return forward(request, body);
+        }
+    }
 
-        HttpRequest.Builder builder = HttpRequest.newBuilder(target)
-                                                 .timeout(Duration.ofSeconds(30))
-                                                 .method(request.getMethod(), body.length == 0
-                                                         ? HttpRequest.BodyPublishers.noBody()
-                                                         : HttpRequest.BodyPublishers.ofByteArray(body));
+    private ResponseEntity<byte[]> forward(HttpServletRequest request, byte[] body) {
+        String target = targetUri(request);
 
-        copyRequestHeaders(request, builder);
+        WebClient.RequestBodySpec requestSpec = webClient
+                .method(Objects.requireNonNull(HttpMethod.valueOf(request.getMethod())))
+                .uri(target);
 
-        HttpResponse<byte[]> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
+        copyRequestHeaders(request, requestSpec);
+
+        WebClient.RequestHeadersSpec<?> headersSpec = body.length == 0
+                ? requestSpec
+                : requestSpec.bodyValue(body);
+
+        ResponseEntity<byte[]> response = headersSpec
+                .exchangeToMono(clientResponse -> clientResponse.toEntity(byte[].class))
+                .block();
+
         HttpHeaders headers = new HttpHeaders();
-        response.headers().map().forEach((name, values) -> {
+        Objects.requireNonNull(response).getHeaders().forEach((name, values) -> {
             if (!HOP_BY_HOP_HEADERS.contains(name.toLowerCase())) {
                 headers.put(name, values);
             }
         });
 
-        return new ResponseEntity<>(response.body(), headers, HttpStatusCode.valueOf(response.statusCode()));
+        return new ResponseEntity<>(response.getBody(), headers, HttpStatusCode.valueOf(response.getStatusCode().value()));
     }
 
-    private URI targetUri(HttpServletRequest request) {
+    private String targetUri(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         String baseUrl = routeBaseUrl(requestUri);
         String query = request.getQueryString();
-
-        // e prin eureka
-        if (baseUrl != null && baseUrl.startsWith("lb://")) {
-            URI lbUri = URI.create(baseUrl);
-            String serviceName = lbUri.getHost();
-            ServiceInstance instance = loadBalancerClient.choose(serviceName);
-            if (instance == null) {
-                throw new IllegalStateException("Serviciul " + serviceName + " nu este disponibil in Eureka!");
-            }
-
-
-            String realBaseUrl = String.format("http://%s:%s", instance.getHost(), instance.getPort());
-            return URI.create(realBaseUrl + requestUri + (query == null ? "" : "?" + query));
-        }
-
-        // altfel
-        return URI.create(baseUrl + requestUri + (query == null ? "" : "?" + query));
+        return baseUrl + requestUri + (query == null ? "" : "?" + query);
     }
 
     private String routeBaseUrl(String requestUri) {
@@ -113,7 +103,7 @@ public class ProxyController {
         throw new IllegalArgumentException("No gateway route configured for " + requestUri);
     }
 
-    private void copyRequestHeaders(HttpServletRequest request, HttpRequest.Builder builder) {
+    private void copyRequestHeaders(HttpServletRequest request, WebClient.RequestBodySpec builder) {
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement();
