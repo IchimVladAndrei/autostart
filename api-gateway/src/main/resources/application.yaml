@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: api-gateway
+    name:  api-gateway
 
 app:
   cors:
@@ -12,3 +12,11 @@ app:
     auth-user-url: ${AUTH_USER_SERVICE_URL:http://localhost:8081}
     vehicle-url: ${VEHICLE_SERVICE_URL:http://localhost:8082}
     sales-url: ${SALES_SERVICE_URL:http://localhost:8083}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
