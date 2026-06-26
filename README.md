@@ -488,13 +488,6 @@ Fișiere relevante:
 - Erorile sunt normalizate prin `GlobalExceptionHandler`.
 - Răspunsurile de eroare includ status, mesaj, path și erori de validare.
 
-## Screenshots
-
-### Interfață AutoStart
-
-<img width="989" height="819" alt="AutoStart dashboard" src="https://github.com/user-attachments/assets/eb9c7e3c-ee69-4804-8b68-8dbae9d6f8bf" />
-
-
 ## Autori
 
 - Bărboi Sabin
